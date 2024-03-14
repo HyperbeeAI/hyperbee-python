@@ -7,7 +7,7 @@ and offers both synchronous and asynchronous clients powered by [httpx](https://
 
 ## Documentation
 
-The REST API documentation can be found [on hyperbee docs](https://api-gateway-rggamclbsa-uc.a.run.app/docs).
+The REST API documentation can be found [on hyperbee docs](https://api.hyperbee.ai/redoc).
 
 ## Installation
 
