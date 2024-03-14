@@ -42,7 +42,7 @@ payload = {
 }
 headers = {
     'accept': 'application',
-    'Authorization': f'Bearer {os.environ["HIVE_API_KEY"]}',
+    'Authorization': f'Bearer {os.environ["HIVE_API_KEY"]}', # Replace with your actual API key or set it as environment variable
     'Content-Type': 'application/json'
 }
 

@@ -5,7 +5,7 @@ The REST API documentation can be found [on hyperbee docs](https://api.hyperbee.
 ## Installation
 
 ```sh
-pip install .
+pip install git+https://github.com/HyperbeeAI/hive-python
 ```
 
 ## Usage
@@ -224,7 +224,7 @@ client.with_options(max_retries=5).chat.completions.create(
             "content": "How can I get the name of the current day in Node.js?",
         }
     ],
-    model="gpt-3.5-turbo",
+    model="hive",
 )
 ```
 
@@ -255,7 +255,7 @@ client.with_options(timeout=5 * 1000).chat.completions.create(
             "content": "How can I list all files in a directory using Python?",
         }
     ],
-    model="gpt-3.5-turbo",
+    model="hive",
 )
 ```
 
@@ -300,7 +300,7 @@ response = client.chat.completions.with_raw_response.create(
         "role": "user",
         "content": "Say this is a test",
     }],
-    model="gpt-3.5-turbo",
+    model="hive",
 )
 print(response.headers.get('X-My-Header'))
 
@@ -333,7 +333,7 @@ with client.chat.completions.with_streaming_response.create(
             "content": "Say this is a test",
         }
     ],
-    model="gpt-3.5-turbo",
+    model="hive",
 ) as response:
     print(response.headers.get("X-My-Header"))
 
