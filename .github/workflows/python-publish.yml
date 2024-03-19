@@ -8,6 +8,7 @@
 
 name: Upload Python Package
 
+
 on:
   release:
     types: [published]
@@ -20,7 +21,7 @@ permissions:
 jobs:
   deploy:
     environment: release
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     
     steps:
     - uses: actions/checkout@v3
