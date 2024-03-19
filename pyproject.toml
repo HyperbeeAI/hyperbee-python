@@ -41,8 +41,8 @@ classifiers = [
 datalib = ["numpy >= 1", "pandas >= 1.2.3", "pandas-stubs >= 1.1.0.11"]
 
 [project.urls]
-Homepage = "https://github.com/sai-tr/HIVE_AUTOBEE_PYTHON"
-Repository = "https://github.com/sai-tr/HIVE_AUTOBEE_PYTHON"
+Homepage = "https://github.com/HyperbeeAI/hive-python"
+Repository = "https://github.com/HyperbeeAI/hive-python"
 
 
 [tool.rye]
