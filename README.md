@@ -12,7 +12,7 @@ The REST API documentation can be found [on hyperbee docs](https://api.hyperbee.
 ## Installation
 
 ```sh
-pip install git+https://github.com/HyperbeeAI/hive-python
+pip install hyperbee
 ```
 
 ## Usage
