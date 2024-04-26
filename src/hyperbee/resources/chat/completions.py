@@ -336,6 +336,7 @@ class Completions(SyncAPIResource):
                     "top_logprobs": top_logprobs,
                     "top_p": top_p,
                     "user": user,
+                    "optimization": optimization,
                 },
                 completion_create_params.CompletionCreateParams,
             ),
