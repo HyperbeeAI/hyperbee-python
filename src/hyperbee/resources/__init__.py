@@ -24,6 +24,9 @@ from .completions import (
     CompletionsWithStreamingResponse,
     AsyncCompletionsWithStreamingResponse,
 )
+from .pipeline import (
+    Pipeline,
+)
 
 __all__ = [
     "Completions",
@@ -43,5 +46,6 @@ __all__ = [
     "ModelsWithRawResponse",
     "AsyncModelsWithRawResponse",
     "ModelsWithStreamingResponse",
-    "AsyncModelsWithStreamingResponse"
+    "AsyncModelsWithStreamingResponse",
+    "Pipeline"
 ]
