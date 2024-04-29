@@ -35,11 +35,10 @@ class Pipeline(SyncAPIResource):
         return CompletionsWithRawResponse(self)
     
     
-    @required_args(["messages", "task_id", "query", "candidate_labels"])
+    @required_args(["task_id", "query", "candidate_labels"])
     def __call__(
         self,
         *,
-        messages: Iterable[ChatCompletionMessageParam],
         model: Union[
             str,
             Literal[
@@ -62,7 +61,7 @@ class Pipeline(SyncAPIResource):
             "/pipeline",
             body=maybe_transform(
                 {
-                    "messages": messages,
+                    "messages": [{"role": "user","content": ""}],
                     "model": model,
                     "task_id": task_id,
                     "query": query,
