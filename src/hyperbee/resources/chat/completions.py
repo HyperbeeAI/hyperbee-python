@@ -163,50 +163,7 @@ class Completions(SyncAPIResource):
         """
         ...
 
-    @required_args(["messages", "task_id", "query", "candidate_labels"])
-    def pipeline(
-        self,
-        *,
-        messages: Iterable[ChatCompletionMessageParam],
-        model: Union[
-            str,
-            Literal[
-                "hive",
-            ],
-        ],
-        task_id: Literal["classification"] | NotGiven = NOT_GIVEN,
-        query: Optional[str] | NotGiven = NOT_GIVEN,
-        candidate_labels: Optional[List[str]] | NotGiven = NOT_GIVEN,
-        stream: Optional[Literal[False]] | Literal[True] | NotGiven = NOT_GIVEN,
-        # Use the following arguments if you need to pass additional parameters to the API that aren't available via kwargs.
-        # The extra values given here take precedence over values defined on the client or passed to this method.
-        extra_headers: Headers | None = None,
-        extra_query: Query | None = None,
-        extra_body: Body | None = None,
-        timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
-    ) -> ChatCompletion | Stream[ChatCompletionChunk]:
-                  
-        return self._post(
-            "/pipeline",
-            body=maybe_transform(
-                {
-                    "messages": messages,
-                    "model": model,
-                    "task_id": task_id,
-                    "query": query,
-                    "candidate_labels": candidate_labels,
-                },
-                completion_create_params.CompletionCreateParams,
-            ),
-            
-            options=make_request_options(
-                extra_headers=extra_headers, extra_query=extra_query, extra_body=extra_body, timeout=timeout
-            ),
-            cast_to=ChatCompletion,
-            stream=stream or False,
-            stream_cls=Stream[ChatCompletionChunk],
-        )
-
+    
     @required_args(["messages", "model"], ["messages", "model", "stream"])
     def create(
         self,
