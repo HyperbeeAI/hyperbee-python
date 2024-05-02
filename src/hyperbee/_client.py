@@ -286,7 +286,7 @@ class AsyncHive(AsyncAPIClient):
         if base_url is None:
             base_url = os.environ.get("HIVE_BASE_URL")
         if base_url is None:
-            base_url = f"https://api.openai.com/v1"
+            base_url = f"https://api.hyperbee.ai/v1/"
 
         super().__init__(
             version=__version__,
@@ -306,6 +306,7 @@ class AsyncHive(AsyncAPIClient):
         self.models = resources.AsyncModels(self)
         self.with_raw_response = AsyncHiveWithRawResponse(self)
         self.with_streaming_response = AsyncHiveWithStreamedResponse(self)
+        self.pipeline = resources.AsyncPipeline(self)
 
     @property
     @override
