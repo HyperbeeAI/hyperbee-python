@@ -66,6 +66,8 @@ class Completions(SyncAPIResource):
         top_logprobs: Optional[int] | NotGiven = NOT_GIVEN,
         top_p: Optional[float] | NotGiven = NOT_GIVEN,
         user: str | NotGiven = NOT_GIVEN,
+        output_mode: Optional[str] | NotGiven = NOT_GIVEN,
+        json_schema: Optional[str] | NotGiven = NOT_GIVEN,
         # Use the following arguments if you need to pass additional parameters to the API that aren't available via kwargs.
         # The extra values given here take precedence over values defined on the client or passed to this method.
         extra_headers: Headers | None = None,
@@ -105,6 +107,8 @@ class Completions(SyncAPIResource):
         top_logprobs: Optional[int] | NotGiven = NOT_GIVEN,
         top_p: Optional[float] | NotGiven = NOT_GIVEN,
         user: str | NotGiven = NOT_GIVEN,
+        output_mode: Optional[str] | NotGiven = NOT_GIVEN,
+        json_schema: Optional[str] | NotGiven = NOT_GIVEN,
         # Use the following arguments if you need to pass additional parameters to the API that aren't available via kwargs.
         # The extra values given here take precedence over values defined on the client or passed to this method.
         extra_headers: Headers | None = None,
@@ -145,6 +149,8 @@ class Completions(SyncAPIResource):
         top_logprobs: Optional[int] | NotGiven = NOT_GIVEN,
         top_p: Optional[float] | NotGiven = NOT_GIVEN,
         user: str | NotGiven = NOT_GIVEN,
+        output_mode: Optional[str] | NotGiven = NOT_GIVEN,
+        json_schema: Optional[str] | NotGiven = NOT_GIVEN,
         # Use the following arguments if you need to pass additional parameters to the API that aren't available via kwargs.
         # The extra values given here take precedence over values defined on the client or passed to this method.
         extra_headers: Headers | None = None,
@@ -157,6 +163,7 @@ class Completions(SyncAPIResource):
         """
         ...
 
+    
     @required_args(["messages", "model"], ["messages", "model", "stream"])
     def create(
         self,
@@ -185,6 +192,8 @@ class Completions(SyncAPIResource):
         top_logprobs: Optional[int] | NotGiven = NOT_GIVEN,
         top_p: Optional[float] | NotGiven = NOT_GIVEN,
         user: str | NotGiven = NOT_GIVEN,
+        output_mode: Optional[str] | NotGiven = NOT_GIVEN,
+        json_schema: Optional[str] | NotGiven = NOT_GIVEN,
         # Use the following arguments if you need to pass additional parameters to the API that aren't available via kwargs.
         # The extra values given here take precedence over values defined on the client or passed to this method.
         extra_headers: Headers | None = None,
@@ -305,7 +314,16 @@ class Completions(SyncAPIResource):
           user: A unique identifier representing your end-user, which can help OpenAI to monitor
               and detect abuse.
               [Learn more](https://platform.openai.com/docs/guides/safety-best-practices/end-user-ids).
+        
+          output_mode: Specifies the desired output format for the model's response.
+              If set to "json", the model will attempt to generate a valid JSON response.
+              Otherwise, the model will generate a regular text response.
 
+          json_schema: Specifies a JSON schema that the model's JSON response should conform to.
+            The schema should be a Python dictionary following the JSON Schema specification (https://json-schema.org/).
+            If not provided, the model will generate a JSON response without enforcing a specific schema.
+  
+    
           extra_headers: Send extra headers
 
           extra_query: Add additional query parameters to the request
@@ -337,6 +355,8 @@ class Completions(SyncAPIResource):
                     "top_p": top_p,
                     "user": user,
                     "optimization": optimization,
+                    "output_mode": output_mode,
+                    "json_schema": json_schema,
                 },
                 completion_create_params.CompletionCreateParams,
             ),
@@ -370,6 +390,7 @@ class AsyncCompletions(AsyncAPIResource):
                 "hive",
             ],
         ],
+        optimization: Optional[Literal["cost", "quality", "auto"]] | NotGiven = NOT_GIVEN,
         frequency_penalty: Optional[float] | NotGiven = NOT_GIVEN,
         logit_bias: Optional[Dict[str, int]] | NotGiven = NOT_GIVEN,
         logprobs: Optional[bool] | NotGiven = NOT_GIVEN,
@@ -386,6 +407,8 @@ class AsyncCompletions(AsyncAPIResource):
         top_logprobs: Optional[int] | NotGiven = NOT_GIVEN,
         top_p: Optional[float] | NotGiven = NOT_GIVEN,
         user: str | NotGiven = NOT_GIVEN,
+        output_mode: Optional[str] | NotGiven = NOT_GIVEN,
+        json_schema: Optional[str] | NotGiven = NOT_GIVEN,
         # Use the following arguments if you need to pass additional parameters to the API that aren't available via kwargs.
         # The extra values given here take precedence over values defined on the client or passed to this method.
         extra_headers: Headers | None = None,
@@ -409,6 +432,7 @@ class AsyncCompletions(AsyncAPIResource):
             ],
         ],
         stream: Literal[True],
+        optimization: Optional[Literal["cost", "quality", "auto"]] | NotGiven = NOT_GIVEN,
         frequency_penalty: Optional[float] | NotGiven = NOT_GIVEN,
         logit_bias: Optional[Dict[str, int]] | NotGiven = NOT_GIVEN,
         logprobs: Optional[bool] | NotGiven = NOT_GIVEN,
@@ -424,6 +448,8 @@ class AsyncCompletions(AsyncAPIResource):
         top_logprobs: Optional[int] | NotGiven = NOT_GIVEN,
         top_p: Optional[float] | NotGiven = NOT_GIVEN,
         user: str | NotGiven = NOT_GIVEN,
+        output_mode: Optional[str] | NotGiven = NOT_GIVEN,
+        json_schema: Optional[str] | NotGiven = NOT_GIVEN,
         # Use the following arguments if you need to pass additional parameters to the API that aren't available via kwargs.
         # The extra values given here take precedence over values defined on the client or passed to this method.
         extra_headers: Headers | None = None,
@@ -448,6 +474,7 @@ class AsyncCompletions(AsyncAPIResource):
             ],
         ],
         stream: bool,
+        optimization: Optional[Literal["cost", "quality", "auto"]] | NotGiven = NOT_GIVEN,
         frequency_penalty: Optional[float] | NotGiven = NOT_GIVEN,
         logit_bias: Optional[Dict[str, int]] | NotGiven = NOT_GIVEN,
         logprobs: Optional[bool] | NotGiven = NOT_GIVEN,
@@ -463,6 +490,8 @@ class AsyncCompletions(AsyncAPIResource):
         top_logprobs: Optional[int] | NotGiven = NOT_GIVEN,
         top_p: Optional[float] | NotGiven = NOT_GIVEN,
         user: str | NotGiven = NOT_GIVEN,
+        output_mode: Optional[str] | NotGiven = NOT_GIVEN,
+        json_schema: Optional[str] | NotGiven = NOT_GIVEN,
         # Use the following arguments if you need to pass additional parameters to the API that aren't available via kwargs.
         # The extra values given here take precedence over values defined on the client or passed to this method.
         extra_headers: Headers | None = None,
@@ -486,6 +515,7 @@ class AsyncCompletions(AsyncAPIResource):
                 "hive",
             ],
         ],
+        optimization: Optional[Literal["cost", "quality", "auto"]] | NotGiven = NOT_GIVEN,
         frequency_penalty: Optional[float] | NotGiven = NOT_GIVEN,
         logit_bias: Optional[Dict[str, int]] | NotGiven = NOT_GIVEN,
         logprobs: Optional[bool] | NotGiven = NOT_GIVEN,
@@ -502,6 +532,8 @@ class AsyncCompletions(AsyncAPIResource):
         top_logprobs: Optional[int] | NotGiven = NOT_GIVEN,
         top_p: Optional[float] | NotGiven = NOT_GIVEN,
         user: str | NotGiven = NOT_GIVEN,
+        output_mode: Optional[str] | NotGiven = NOT_GIVEN,
+        json_schema: Optional[str] | NotGiven = NOT_GIVEN,
         # Use the following arguments if you need to pass additional parameters to the API that aren't available via kwargs.
         # The extra values given here take precedence over values defined on the client or passed to this method.
         extra_headers: Headers | None = None,
@@ -517,6 +549,9 @@ class AsyncCompletions(AsyncAPIResource):
 
           model: ID of the model to use. See the
               For now only `hive` is supported.
+
+          optimization: Whether to optimize for `cost` or `quality`. If set to `auto`, 
+              the API will optimize for both cost and quality. The default is `auto`.
 
           frequency_penalty: Number between -2.0 and 2.0. Positive values penalize new tokens based on their
               existing frequency in the text so far, decreasing the model's likelihood to
@@ -620,6 +655,14 @@ class AsyncCompletions(AsyncAPIResource):
               and detect abuse.
               [Learn more](https://platform.openai.com/docs/guides/safety-best-practices/end-user-ids).
 
+          output_mode: Specifies the desired output format for the model's response.
+              If set to "json", the model will attempt to generate a valid JSON response.
+              Otherwise, the model will generate a regular text response.
+
+          json_schema: Specifies a JSON schema that the model's JSON response should conform to.
+            The schema should be a Python dictionary following the JSON Schema specification (https://json-schema.org/).
+            If not provided, the model will generate a JSON response without enforcing a specific schema.
+  
           extra_headers: Send extra headers
 
           extra_query: Add additional query parameters to the request
@@ -649,6 +692,9 @@ class AsyncCompletions(AsyncAPIResource):
                     "top_logprobs": top_logprobs,
                     "top_p": top_p,
                     "user": user,
+                    "optimization": optimization,
+                    "output_mode": output_mode,
+                    "json_schema": json_schema,
                 },
                 completion_create_params.CompletionCreateParams,
             ),
