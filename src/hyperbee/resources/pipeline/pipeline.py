@@ -56,8 +56,30 @@ class Pipeline(SyncAPIResource):
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
     ) -> ChatCompletion | Stream[ChatCompletionChunk]:
-                  
-        return self._post(
+         """
+            Perform a pipeline of operations using the Hive language model.
+
+            Args:
+                model: The ID of the model to use for the pipeline.
+                
+                task_id: Specifies the ultimate task of the pipeline.
+                
+                query: The prompt that specifies the properties of the task of the pipeline.
+                
+                candidate_labels: A list of candidate labels or classes for the classification task.
+                
+                stream: Whether to stream the response or not.
+                
+                extra_headers: Additional headers to include in the request.
+                
+                extra_query: Additional query parameters to include in the request.
+                
+                extra_body: Additional JSON data to include in the request body.
+                
+                timeout: The timeout value for the request.
+
+        """
+         return self._post(
             "/pipeline",
             body=maybe_transform(
                 {
@@ -104,7 +126,29 @@ class AsyncPipeline(AsyncAPIResource):
         extra_body: Body | None = None,
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
     ) -> ChatCompletion | AsyncStream[ChatCompletionChunk]:
-                  
+        """
+            Perform a pipeline of operations using the Hive language model.
+
+            Args:
+                model: The ID of the model to use for the pipeline.
+                
+                task_id: Specifies the ultimate task of the pipeline.
+                
+                query: The prompt that specifies the properties of the task of the pipeline.
+                
+                candidate_labels: A list of candidate labels or classes for the classification task.
+                
+                stream: Whether to stream the response or not.
+                
+                extra_headers: Additional headers to include in the request.
+                
+                extra_query: Additional query parameters to include in the request.
+                
+                extra_body: Additional JSON data to include in the request body.
+                
+                timeout: The timeout value for the request.
+
+        """
         return await self._post(
             "/pipeline",
             body=maybe_transform(

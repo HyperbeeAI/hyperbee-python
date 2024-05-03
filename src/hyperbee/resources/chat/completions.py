@@ -314,7 +314,16 @@ class Completions(SyncAPIResource):
           user: A unique identifier representing your end-user, which can help OpenAI to monitor
               and detect abuse.
               [Learn more](https://platform.openai.com/docs/guides/safety-best-practices/end-user-ids).
+        
+          output_mode: Specifies the desired output format for the model's response.
+              If set to "json", the model will attempt to generate a valid JSON response.
+              Otherwise, the model will generate a regular text response.
 
+          json_schema: Specifies a JSON schema that the model's JSON response should conform to.
+            The schema should be a Python dictionary following the JSON Schema specification (https://json-schema.org/).
+            If not provided, the model will generate a JSON response without enforcing a specific schema.
+  
+    
           extra_headers: Send extra headers
 
           extra_query: Add additional query parameters to the request
@@ -541,6 +550,9 @@ class AsyncCompletions(AsyncAPIResource):
           model: ID of the model to use. See the
               For now only `hive` is supported.
 
+          optimization: Whether to optimize for `cost` or `quality`. If set to `auto`, 
+              the API will optimize for both cost and quality. The default is `auto`.
+
           frequency_penalty: Number between -2.0 and 2.0. Positive values penalize new tokens based on their
               existing frequency in the text so far, decreasing the model's likelihood to
               repeat the same line verbatim.
@@ -643,6 +655,14 @@ class AsyncCompletions(AsyncAPIResource):
               and detect abuse.
               [Learn more](https://platform.openai.com/docs/guides/safety-best-practices/end-user-ids).
 
+          output_mode: Specifies the desired output format for the model's response.
+              If set to "json", the model will attempt to generate a valid JSON response.
+              Otherwise, the model will generate a regular text response.
+
+          json_schema: Specifies a JSON schema that the model's JSON response should conform to.
+            The schema should be a Python dictionary following the JSON Schema specification (https://json-schema.org/).
+            If not provided, the model will generate a JSON response without enforcing a specific schema.
+  
           extra_headers: Send extra headers
 
           extra_query: Add additional query parameters to the request
