@@ -10,7 +10,7 @@ import re
 class batch_request():
     
     def __init__(self, api_key):
-        self.base_url = "http://34.27.22.31:30001"
+        self.base_url = "https://api-fastest.hyperbee.ai"
         self.client = httpx.Client(timeout=180.0)
         self.thread_cnt = 22
         
