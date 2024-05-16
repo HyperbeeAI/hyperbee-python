@@ -122,6 +122,7 @@ class Hive(SyncAPIClient):
         self.with_raw_response = HiveWithRawResponse(self)
         self.with_streaming_response = HiveWithStreamedResponse(self)
         self.pipeline = resources.Pipeline(self)
+        self.batch_request = resources.batch_request(self)
 
     @property
     @override

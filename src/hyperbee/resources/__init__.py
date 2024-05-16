@@ -28,6 +28,9 @@ from .pipeline import (
     Pipeline,
     AsyncPipeline,
 )
+from .batch_request import (
+    batch_request,
+)
 
 __all__ = [
     "Completions",
@@ -49,5 +52,6 @@ __all__ = [
     "ModelsWithStreamingResponse",
     "AsyncModelsWithStreamingResponse",
     "Pipeline",
-    "AsyncPipeline"
+    "AsyncPipeline",
+    "batch_request"
 ]
