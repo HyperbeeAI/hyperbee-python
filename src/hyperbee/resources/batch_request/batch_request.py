@@ -10,12 +10,12 @@ import re
 class batch_request():
     
     def __init__(self, api_key):
-        self.base_url = "34.123.162.171:30001"
+        self.base_url = "http://34.123.162.171:30001"
         self.client = httpx.Client(timeout=180.0)
         self.thread_cnt = 22
         
     def __call__(self, prompt_list: List[str], output_length: int):
-        self.base_url = "34.123.162.171:30001"
+        self.base_url = "http://34.123.162.171:30001"
         self.client = httpx.Client(timeout=180.0)
         output_length = output_length + 1
         threads = []
