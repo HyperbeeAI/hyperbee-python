@@ -10,12 +10,12 @@ import re
 class batch_request():
     
     def __init__(self, api_key):
-        self.base_url = "https://api-fastest.hyperbee.ai"
+        self.base_url = "34.123.162.171:30001"
         self.client = httpx.Client(timeout=180.0)
         self.thread_cnt = 22
         
     def __call__(self, prompt_list: List[str], output_length: int):
-        self.base_url = "http://34.27.22.31:30001"
+        self.base_url = "34.123.162.171:30001"
         self.client = httpx.Client(timeout=180.0)
         output_length = output_length + 1
         threads = []
@@ -25,7 +25,7 @@ class batch_request():
         try:
             for i in range(0, len(prompt_list), prompt_per_thread):
                 batch = prompt_list[i:i + prompt_per_thread]
-                batch_tuples = [(prompt, output_length) for prompt in batch]
+                batch_tuples = [(f"<|user|>\n{prompt}<|end|>\n<|assistant|>", output_length) for prompt in batch]
                 t = threading.Thread(target=send_batch, args=(self.client, self.base_url, batch_tuples, i+1, result_queue))
                 threads.append(t)
                 t.start()
