@@ -28,7 +28,6 @@ class batch_request():
         
         total_thread_cnt = self.thread_cnt + self.thread_cnt2
         prompt_per_thread = (len(prompt_list) // total_thread_cnt) + 1
-        print(f"Per thread prompt length : {prompt_per_thread}")
         try:
             thread_index = 1
             for i in range(0, len(prompt_list), prompt_per_thread):
@@ -61,11 +60,8 @@ def extract_required_part(output: str) -> str:
     return output.split("<|end|>")[0][1:]
 
 def send_batch(client, base_url, requests, thread_id, result_queue):
-    start = time.time()
     results = run_vllm(client, base_url, requests)
     result_queue.put((thread_id, results))
-    end = time.time()
-    print(f"Thread {thread_id} finished in {end-start:.2f}s")
 
 def run_vllm(client, base_url, requests: List[Tuple[str, int]]) -> List[Tuple[str, str]]:
     request_items = [{'prompt': prompt, 'output_len': output_len} for prompt, output_len in requests]
