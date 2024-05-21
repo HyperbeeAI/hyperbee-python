@@ -35,8 +35,13 @@ class batch_request:
             thread_index += 1
         
         results = await asyncio.gather(*tasks)
+        
+        combined_results = []
+        for result in results:
+            combined_results.extend(result)
+                
+        return combined_results
 
-        return results
     
     def __call__(self, prompt_list: List[str], output_length: int):
         return asyncio.run(self.sync_call(prompt_list, output_length))
