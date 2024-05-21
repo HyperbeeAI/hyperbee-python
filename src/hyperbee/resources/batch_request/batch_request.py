@@ -10,12 +10,14 @@ import re
 class batch_request():
     
     def __init__(self, api_key):
-        self.client = httpx.Client(timeout=180.0,follow_redirects=True)
-        self.client2 = httpx.Client(timeout=180.0,follow_redirects=True)
+        self.base_url = "http://35.239.135.107:30001"
+        self.base_url2 = "http://34.68.121.35:30001"
+        
         self.thread_cnt = 120
         self.thread_cnt2 = 120
 
     def __call__(self, prompt_list: List[str], output_length: int):
+        
         self.base_url = "http://35.239.135.107:30001"
         self.base_url2 = "http://34.68.121.35:30001"
         self.client = httpx.Client(timeout=180.0,follow_redirects=True)
@@ -53,6 +55,7 @@ class batch_request():
             return combined_results
         finally:
             self.client.close()
+            self.client2.close()
 
 def extract_required_part(output: str) -> str:
     return output #.split("<|end|>")[0][1:]
