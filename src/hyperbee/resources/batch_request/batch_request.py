@@ -20,8 +20,7 @@ class batch_request():
         
         self.base_url = "http://35.239.135.107:30001"
         self.base_url2 = "http://34.68.121.35:30001"
-        self.client = httpx.Client(timeout=180.0,follow_redirects=True)
-        self.client2 = httpx.Client(timeout=180.0,follow_redirects=True)
+        
         output_length = output_length + 1
         threads = []
         result_queue = queue.Queue()
@@ -34,9 +33,9 @@ class batch_request():
                 batch = prompt_list[i:i + prompt_per_thread]
                 batch_tuples = [(f"{prompt}", output_length) for prompt in batch]
                 if thread_index <= self.thread_cnt:
-                    t = threading.Thread(target=send_batch, args=(self.client, self.base_url, batch_tuples, thread_index, result_queue))
+                    t = threading.Thread(target=send_batch, args=(0,self.base_url, batch_tuples, thread_index, result_queue))
                 else:
-                    t = threading.Thread(target=send_batch, args=(self.client2, self.base_url2, batch_tuples, thread_index, result_queue))
+                    t = threading.Thread(target=send_batch, args=(1,self.base_url2, batch_tuples, thread_index, result_queue))
                 threads.append(t)
                 thread_index += 1
                 t.start()
@@ -53,14 +52,15 @@ class batch_request():
                 combined_results.extend(result[1])
                 
             return combined_results
+        
         finally:
-            self.client.close()
-            self.client2.close()
+            pass
 
 def extract_required_part(output: str) -> str:
     return output #.split("<|end|>")[0][1:]
 
-def send_batch(client, base_url, requests, thread_id, result_queue):
+def send_batch(client_id, base_url, requests, thread_id, result_queue):
+    client = httpx.Client(timeout=180.0,follow_redirects=True)
     results = run_vllm(client, base_url, requests)
     result_queue.put((thread_id, results))
 
