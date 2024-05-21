@@ -20,8 +20,8 @@ class batch_request():
         
         self.base_url = "http://35.239.135.107:30001"
         self.base_url2 = "http://34.68.121.35:30001"
-        self.client = httpx.Client(timeout=180.0,follow_redirects=True)
-        self.client2 = httpx.Client(timeout=180.0,follow_redirects=True)
+        self.client = httpx.Client(timeout=300.0,follow_redirects=True)
+        self.client2 = httpx.Client(timeout=300.0,follow_redirects=True)
         output_length = output_length + 1
         threads = []
         result_queue = queue.Queue()
