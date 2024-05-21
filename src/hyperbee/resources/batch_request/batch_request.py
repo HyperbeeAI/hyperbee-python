@@ -9,14 +9,15 @@ class batch_request:
         self.api_key = api_key  # Assuming you will use api_key somewhere
         self.base_url = "http://35.239.135.107:30001"
         self.base_url2 = "http://34.68.121.35:30001"
-        self.thread_cnt = 125
-        self.thread_cnt2 = 125
-
+        self.base_url3 = "http://34.170.152.22:30001"
+        self.thread_cnt = 120
+        self.thread_cnt2 = 120
+        self.thread_cnt3 = 10
     async def sync_call(self, prompt_list: List[str], output_length: int):
         output_length = output_length + 1
         result_queue = queue.Queue()
         
-        total_thread_cnt = self.thread_cnt + self.thread_cnt2
+        total_thread_cnt = self.thread_cnt + self.thread_cnt2 + self.thread_cnt3
         prompt_per_thread = (len(prompt_list) // total_thread_cnt) + 1
         
         tasks = []
@@ -24,10 +25,13 @@ class batch_request:
         for i in range(0, len(prompt_list), prompt_per_thread):
             batch = prompt_list[i:i + prompt_per_thread]
             batch_tuples = [(f"{prompt}", output_length) for prompt in batch]
+            
             if thread_index <= self.thread_cnt:
                 tasks.append(send_batch(self.base_url, batch_tuples, thread_index, result_queue))
-            else:
+            elif self.thread_cnt < thread_index <= self.thread_cnt + self.thread_cnt2:
                 tasks.append(send_batch(self.base_url2, batch_tuples, thread_index, result_queue))
+            else:
+                tasks.append(send_batch(self.base_url3, batch_tuples, thread_index, result_queue))
             thread_index += 1
         
         results = await asyncio.gather(*tasks)
@@ -42,6 +46,7 @@ def extract_required_part(output: str) -> str:
 
 async def send_batch(base_url, requests, thread_id, result_queue):
     results = await run_vllm(base_url, requests)
+    return results
 
 async def run_vllm(base_url, requests: List[Tuple[str, int]]) -> List[str]:
     async with httpx.AsyncClient(timeout=300.0, follow_redirects=True, max_redirects=10_000) as client:
