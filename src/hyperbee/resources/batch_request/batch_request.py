@@ -10,18 +10,18 @@ import re
 class batch_request():
     
     def __init__(self, api_key):
-        self.base_url = "http://34.123.162.171:30002"
-        self.base_url2 = "http://35.202.29.116:30001"
-        self.client = httpx.Client(timeout=180.0)
-        self.client2 = httpx.Client(timeout=180.0)
-        self.thread_cnt = 160
-        self.thread_cnt2 = 60
-        
+        self.base_url = "http://35.239.135.107:30001"
+        self.base_url2 = "http://34.68.121.35:30001"
+        self.client = httpx.Client(timeout=180.0,follow_redirects=True)
+        self.client2 = httpx.Client(timeout=180.0,follow_redirects=True)
+        self.thread_cnt = 120
+        self.thread_cnt2 = 120
+
     def __call__(self, prompt_list: List[str], output_length: int):
-        self.base_url = "http://34.123.162.171:30002"
-        self.base_url2 = "http://35.202.29.116:30001"
-        self.client = httpx.Client(timeout=180.0)
-        self.client2 = httpx.Client(timeout=180.0)
+        self.base_url = "http://35.239.135.107:30001"
+        self.base_url2 = "http://34.68.121.35:30001"
+        self.client = httpx.Client(timeout=180.0,follow_redirects=True)
+        self.client2 = httpx.Client(timeout=180.0,follow_redirects=True)
         output_length = output_length + 1
         threads = []
         result_queue = queue.Queue()
@@ -32,7 +32,7 @@ class batch_request():
             thread_index = 1
             for i in range(0, len(prompt_list), prompt_per_thread):
                 batch = prompt_list[i:i + prompt_per_thread]
-                batch_tuples = [(f"<|user|>\n{prompt}<|end|>\n<|assistant|>", output_length) for prompt in batch]
+                batch_tuples = [(f"{prompt}", output_length) for prompt in batch]
                 if thread_index <= self.thread_cnt:
                     t = threading.Thread(target=send_batch, args=(self.client, self.base_url, batch_tuples, thread_index, result_queue))
                 else:
@@ -57,7 +57,7 @@ class batch_request():
             self.client.close()
 
 def extract_required_part(output: str) -> str:
-    return output.split("<|end|>")[0][1:]
+    return output #.split("<|end|>")[0][1:]
 
 def send_batch(client, base_url, requests, thread_id, result_queue):
     results = run_vllm(client, base_url, requests)
