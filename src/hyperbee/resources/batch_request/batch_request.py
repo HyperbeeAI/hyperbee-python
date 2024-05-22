@@ -10,9 +10,9 @@ class batch_request:
         self.base_url = "http://35.239.135.107:30001"
         self.base_url2 = "http://34.68.121.35:30001"
         self.base_url3 = "http://34.170.152.22:30001"
-        self.thread_cnt = 120
-        self.thread_cnt2 = 120
-        self.thread_cnt3 = 80
+        self.thread_cnt = 130
+        self.thread_cnt2 = 130
+        self.thread_cnt3 = 135
     async def sync_call(self, prompt_list: List[str], output_length: int):
         output_length = output_length + 1
         result_queue = queue.Queue()
