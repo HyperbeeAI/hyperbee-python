@@ -12,7 +12,7 @@ class batch_request:
         self.base_url3 = "http://34.170.152.22:30001"
         self.thread_cnt = 120
         self.thread_cnt2 = 120
-        self.thread_cnt3 = 10
+        self.thread_cnt3 = 80
     async def sync_call(self, prompt_list: List[str], output_length: int):
         output_length = output_length + 1
         result_queue = queue.Queue()
