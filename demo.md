@@ -7,13 +7,13 @@ Install necessary packages:
 
 demo.py file:
 ```python
-from hyperbee import Hive
+from hyperbee import HyperBee
 import gradio as gr
 import os
 
 
-client = Hive(
-    api_key=os.environ["HIVE_API_KEY"],
+client = HyperBee(
+    api_key=os.environ["HYPERBEE_API_KEY"],
 )
 
 

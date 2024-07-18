@@ -27,7 +27,7 @@ from openai._utils import (
 )
 from ._version import __version__
 from openai._streaming import Stream as Stream, AsyncStream as AsyncStream
-from openai._exceptions import OpenAIError as HiveError, APIStatusError
+from openai._exceptions import OpenAIError as HyperBeeError, APIStatusError
 from openai._base_client import (
     DEFAULT_MAX_RETRIES,
     SyncAPIClient,
@@ -40,19 +40,19 @@ __all__ = [
     "ProxiesTypes",
     "RequestOptions",
     "resources",
-    "Hive",
-    "AsyncHive",
+    "HyperBee",
+    "AsyncHyperBee",
     "Client",
     "AsyncClient",
 ]
 
 
-class Hive(SyncAPIClient):
+class HyperBee(SyncAPIClient):
     completions: resources.Completions
     chat: resources.Chat
     models: resources.Models
-    with_raw_response: HiveWithRawResponse
-    with_streaming_response: HiveWithStreamedResponse
+    with_raw_response: HyperBeeWithRawResponse
+    with_streaming_response: HyperBeeWithStreamedResponse
 
     # client options
     api_key: str
@@ -83,23 +83,23 @@ class Hive(SyncAPIClient):
         """Construct a new synchronous openai client instance.
 
         This automatically infers the following arguments from their corresponding environment variables if they are not provided:
-        - `api_key` from `HIVE_API_KEY`
-        - `organization` from `HIVE_ORG_ID`
+        - `api_key` from `HYPERBEE_API_KEY`
+        - `organization` from `HYPERBEE_ORG_ID`
         """
         if api_key is None:
-            api_key = os.environ.get("HIVE_API_KEY")
+            api_key = os.environ.get("HYPERBEE_API_KEY")
         if api_key is None:
-            raise HiveError(
-                "The api_key client option must be set either by passing api_key to the client or by setting the HIVE_API_KEY environment variable"
+            raise HyperBeeError(
+                "The api_key client option must be set either by passing api_key to the client or by setting the HYPERBEE_API_KEY environment variable"
             )
         self.api_key = api_key
 
         if organization is None:
-            organization = os.environ.get("HIVE_ORG_ID")
+            organization = os.environ.get("HYPERBEE_ORG_ID")
         self.organization = organization
 
         if base_url is None:
-            base_url = os.environ.get("HIVE_BASE_URL")
+            base_url = os.environ.get("HYPERBEE_BASE_URL")
         if base_url is None:
             base_url = f"https://api.hyperbee.ai/v1/"
 
@@ -119,8 +119,8 @@ class Hive(SyncAPIClient):
         self.completions = resources.Completions(self)
         self.chat = resources.Chat(self)
         self.models = resources.Models(self)
-        self.with_raw_response = HiveWithRawResponse(self)
-        self.with_streaming_response = HiveWithStreamedResponse(self)
+        self.with_raw_response = HyperBeeWithRawResponse(self)
+        self.with_streaming_response = HyperBeeWithStreamedResponse(self)
         self.pipeline = resources.Pipeline(self)
         self.batch_request = resources.batch_request(self)
 
@@ -141,7 +141,7 @@ class Hive(SyncAPIClient):
         return {
             **super().default_headers,
             "X-Stainless-Async": "false",
-            "Hive-Organization": self.organization if self.organization is not None else Omit(),
+            "HyperBee-Organization": self.organization if self.organization is not None else Omit(),
             **self._custom_headers,
         }
 
@@ -233,12 +233,12 @@ class Hive(SyncAPIClient):
         return APIStatusError(err_msg, response=response, body=data)
 
 
-class AsyncHive(AsyncAPIClient):
+class AsyncHyperBee(AsyncAPIClient):
     completions: resources.AsyncCompletions
     chat: resources.AsyncChat
     models: resources.AsyncModels
-    with_raw_response: AsyncHiveWithRawResponse
-    with_streaming_response: AsyncHiveWithStreamedResponse
+    with_raw_response: AsyncHyperBeeWithRawResponse
+    with_streaming_response: AsyncHyperBeeWithStreamedResponse
 
     # client options
     api_key: str
@@ -269,23 +269,23 @@ class AsyncHive(AsyncAPIClient):
         """Construct a new async openai client instance.
 
         This automatically infers the following arguments from their corresponding environment variables if they are not provided:
-        - `api_key` from `HIVE_API_KEY`
-        - `organization` from `HIVE_ORG_ID`
+        - `api_key` from `HYPERBEE_API_KEY`
+        - `organization` from `HYPERBEE_ORG_ID`
         """
         if api_key is None:
-            api_key = os.environ.get("HIVE_API_KEY")
+            api_key = os.environ.get("HYPERBEE_API_KEY")
         if api_key is None:
-            raise HiveError(
-                "The api_key client option must be set either by passing api_key to the client or by setting the HIVE_API_KEY environment variable"
+            raise HyperBeeError(
+                "The api_key client option must be set either by passing api_key to the client or by setting the HYPERBEE_API_KEY environment variable"
             )
         self.api_key = api_key
 
         if organization is None:
-            organization = os.environ.get("HIVE_ORG_ID")
+            organization = os.environ.get("HYPERBEE_ORG_ID")
         self.organization = organization
 
         if base_url is None:
-            base_url = os.environ.get("HIVE_BASE_URL")
+            base_url = os.environ.get("HYPERBEE_BASE_URL")
         if base_url is None:
             base_url = f"https://api.hyperbee.ai/v1/"
 
@@ -305,8 +305,8 @@ class AsyncHive(AsyncAPIClient):
         self.completions = resources.AsyncCompletions(self)
         self.chat = resources.AsyncChat(self)
         self.models = resources.AsyncModels(self)
-        self.with_raw_response = AsyncHiveWithRawResponse(self)
-        self.with_streaming_response = AsyncHiveWithStreamedResponse(self)
+        self.with_raw_response = AsyncHyperBeeWithRawResponse(self)
+        self.with_streaming_response = AsyncHyperBeeWithStreamedResponse(self)
         self.pipeline = resources.AsyncPipeline(self)
 
     @property
@@ -326,7 +326,7 @@ class AsyncHive(AsyncAPIClient):
         return {
             **super().default_headers,
             "X-Stainless-Async": f"async:{get_async_library()}",
-            "Hive-Organization": self.organization if self.organization is not None else Omit(),
+            "HyperBee-Organization": self.organization if self.organization is not None else Omit(),
             **self._custom_headers,
         }
 
@@ -418,34 +418,34 @@ class AsyncHive(AsyncAPIClient):
         return APIStatusError(err_msg, response=response, body=data)
 
 
-class HiveWithRawResponse:
-    def __init__(self, client: Hive) -> None:
+class HyperBeeWithRawResponse:
+    def __init__(self, client: HyperBee) -> None:
         self.completions = resources.CompletionsWithRawResponse(client.completions)
         self.chat = resources.ChatWithRawResponse(client.chat)
         self.models = resources.ModelsWithRawResponse(client.models)
 
 
-class AsyncHiveWithRawResponse:
-    def __init__(self, client: AsyncHive) -> None:
+class AsyncHyperBeeWithRawResponse:
+    def __init__(self, client: AsyncHyperBee) -> None:
         self.completions = resources.AsyncCompletionsWithRawResponse(client.completions)
         self.chat = resources.AsyncChatWithRawResponse(client.chat)
         self.models = resources.AsyncModelsWithRawResponse(client.models)
 
 
-class HiveWithStreamedResponse:
-    def __init__(self, client: Hive) -> None:
+class HyperBeeWithStreamedResponse:
+    def __init__(self, client: HyperBee) -> None:
         self.completions = resources.CompletionsWithStreamingResponse(client.completions)
         self.chat = resources.ChatWithStreamingResponse(client.chat)
         self.models = resources.ModelsWithStreamingResponse(client.models)
 
 
-class AsyncHiveWithStreamedResponse:
-    def __init__(self, client: AsyncHive) -> None:
+class AsyncHyperBeeWithStreamedResponse:
+    def __init__(self, client: AsyncHyperBee) -> None:
         self.completions = resources.AsyncCompletionsWithStreamingResponse(client.completions)
         self.chat = resources.AsyncChatWithStreamingResponse(client.chat)
         self.models = resources.AsyncModelsWithStreamingResponse(client.models)
 
 
-Client = Hive
+Client = HyperBee
 
-AsyncClient = AsyncHive
+AsyncClient = AsyncHyperBee

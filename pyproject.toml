@@ -1,11 +1,11 @@
 [project]
 name = "hyperbee"
-version = "0.0.2.4"
+version = "0.0.2.5"
 description = "The official Python library for the hyperbee API"
 readme = "README.md"
 license = "Apache-2.0"
 authors = [
-{ name = "Hive", email = "support@hyperbee.ai" },
+{ name = "HyperBeeAI", email = "support@hyperbee.ai" },
 ]
 dependencies = [
     "openai>=1.10.0, <2",

@@ -57,7 +57,7 @@ class Pipeline(SyncAPIResource):
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
     ) -> ChatCompletion | Stream[ChatCompletionChunk]:
          """
-            Perform a pipeline of operations using the Hive language model.
+            Perform a pipeline of operations using the HyperBee language model.
 
             Args:
                 model: The ID of the model to use for the pipeline.
@@ -127,7 +127,7 @@ class AsyncPipeline(AsyncAPIResource):
         timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
     ) -> ChatCompletion | AsyncStream[ChatCompletionChunk]:
         """
-            Perform a pipeline of operations using the Hive language model.
+            Perform a pipeline of operations using the HyperBee language model.
 
             Args:
                 model: The ID of the model to use for the pipeline.
