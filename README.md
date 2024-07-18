@@ -1,7 +1,7 @@
-# Hive Python API library
+# HyperBee Python API library
 
 
-The Hive Python library provides convenient access to the Hive REST API from any Python 3.7+
+The HyperBee Python library provides convenient access to the HyperBee REST API from any Python 3.7+
 application. The library includes type definitions for all request params and response fields,
 and offers both synchronous and asynchronous clients powered by [httpx](https://github.com/encode/httpx).
 
@@ -20,11 +20,11 @@ pip install hyperbee
 
 ```python
 import os
-from hyperbee import Hive
+from hyperbee import HyperBee
 
-client = Hive(
+client = HyperBee(
     # This is the default and can be omitted
-    api_key=os.environ.get("HIVE_API_KEY"),
+    api_key=os.environ.get("HYPERBEE_API_KEY"),
 )
 
 chat_completion = client.chat.completions.create(
@@ -40,21 +40,21 @@ chat_completion = client.chat.completions.create(
 
 While you can provide an `api_key` keyword argument,
 we recommend using [python-dotenv](https://pypi.org/project/python-dotenv/)
-to add `HIVE_API_KEY="My API Key"` to your `.env` file
+to add `HYPERBEE_API_KEY="My API Key"` to your `.env` file
 so that your API Key is not stored in source control.
 
 ## Async usage
 
-Simply import `AsyncHive` instead of `Hive` and use `await` with each API call:
+Simply import `AsyncHyperBee` instead of `HyperBee` and use `await` with each API call:
 
 ```python
 import os
 import asyncio
-from hyperbee import AsyncHive
+from hyperbee import AsyncHyperBee
 
-client = AsyncHive(
+client = AsyncHyperBee(
     # This is the default and can be omitted
-    api_key=os.environ.get("HIVE_API_KEY"),
+    api_key=os.environ.get("HYPERBEE_API_KEY"),
 )
 
 
@@ -80,9 +80,9 @@ Functionality between the synchronous and asynchronous clients is otherwise iden
 We provide support for streaming responses using Server Side Events (SSE).
 
 ```python
-from hyperbee import Hive
+from hyperbee import HyperBee
 
-client = Hive()
+client = HyperBee()
 
 stream = client.chat.completions.create(
     model="hive",
@@ -96,9 +96,9 @@ for chunk in stream:
 The async client uses the exact same interface.
 
 ```python
-from hyperbee import AsyncHive
+from hyperbee import AsyncHyperBee
 
-client = AsyncHive()
+client = AsyncHyperBee()
 
 
 async def main():
@@ -124,10 +124,10 @@ We also expose a global client instance that is accessible in a similar fashion 
 ```py
 import hyperbee
 
-# optional; defaults to `os.environ['HIVE_API_KEY']`
+# optional; defaults to `os.environ['HYPERBEE_API_KEY']`
 hyperbee.api_key = '...'
 
-# all client options can be configured just like the `Hive` instantiation counterpart
+# all client options can be configured just like the `HyperBee` instantiation counterpart
 hyperbee.base_url = "https://..."
 hyperbee.default_headers = {"x-foo": "true"}
 
@@ -147,7 +147,7 @@ The API is the exact same as the standard client instance based API.
 
 This is intended to be used within REPLs or notebooks for faster iteration, **not** in application code.
 
-We recommend that you always instantiate a client (e.g., with `client = Hive()`) in application code because:
+We recommend that you always instantiate a client (e.g., with `client = HyperBee()`) in application code because:
 
 - It can be difficult to reason about where client options are configured
 - It's not possible to change certain client options without potentially causing race conditions
@@ -168,9 +168,9 @@ Typed requests and responses provide autocomplete and documentation within your 
 Nested parameters are dictionaries, typed using `TypedDict`, for example:
 
 ```python
-from hyperbee import Hive
+from hyperbee import HyperBee
 
-client = Hive()
+client = HyperBee()
 
 completion = client.chat.completions.create(
     messages=[
@@ -216,10 +216,10 @@ Connection errors (for example, due to a network connectivity problem), 408 Requ
 You can use the `max_retries` option to configure or disable retry settings:
 
 ```python
-from hyperbee import Hive
+from hyperbee import HyperBee
 
 # Configure the default for all requests:
-client = Hive(
+client = HyperBee(
     # default is 2
     max_retries=0,
 )
@@ -242,16 +242,16 @@ By default requests time out after 10 minutes. You can configure this with a `ti
 which accepts a float or an [`httpx.Timeout`](https://www.python-httpx.org/advanced/#fine-tuning-the-configuration) object:
 
 ```python
-from hyperbee import Hive
+from hyperbee import HyperBee
 
 # Configure the default for all requests:
-client = Hive(
+client = HyperBee(
     # 20 seconds (default is 10 minutes)
     timeout=20.0,
 )
 
 # More granular control:
-client = Hive(
+client = HyperBee(
     timeout=httpx.Timeout(60.0, read=5.0, write=10.0, connect=2.0),
 )
 
@@ -277,10 +277,10 @@ Note that requests that time out are [retried twice by default](#retries).
 
 We use the standard library [`logging`](https://docs.python.org/3/library/logging.html) module.
 
-You can enable logging by setting the environment variable `HIVE_LOG` to `debug`.
+You can enable logging by setting the environment variable `HYPERBEE_LOG` to `debug`.
 
 ```shell
-$ export HIVE_LOG=debug
+$ export HYPERBEE_LOG=debug
 ```
 
 ### How to tell whether `None` means `null` or missing
@@ -295,62 +295,6 @@ if response.my_field is None:
     print('Got json like {"my_field": null}.')
 ```
 
-### Accessing raw response data (e.g. headers)
-
-The "raw" Response object can be accessed by prefixing `.with_raw_response.` to any HTTP method call, e.g.,
-
-```py
-from hyperbee import Hive
-
-client = Hive()
-response = client.chat.completions.with_raw_response.create(
-    messages=[{
-        "role": "user",
-        "content": "Say this is a test",
-    }],
-    model="hive",
-)
-print(response.headers.get('X-My-Header'))
-
-completion = response.parse()  # get the object that `chat.completions.create()` would have returned
-print(completion)
-```
-
-These methods return an [`LegacyAPIResponse`](https://github.com/openai/openai-python/tree/main/src/openai/_legacy_response.py) object. This is a legacy class as we're changing it slightly in the next major version.
-
-For the sync client this will mostly be the same with the exception
-of `content` & `text` will be methods instead of properties. In the
-async client, all methods will be async.
-
-A migration script will be provided & the migration in general should
-be smooth.
-
-#### `.with_streaming_response`
-
-The above interface eagerly reads the full response body when you make the request, which may not always be what you want.
-
-To stream the response body, use `.with_streaming_response` instead, which requires a context manager and only reads the response body once you call `.read()`, `.text()`, `.json()`, `.iter_bytes()`, `.iter_text()`, `.iter_lines()` or `.parse()`. In the async client, these are async methods.
-
-As such, `.with_streaming_response` methods return a different [`APIResponse`](https://github.com/openai/openai-python/tree/main/src/openai/_response.py) object, and the async client returns an [`AsyncAPIResponse`](https://github.com/openai/openai-python/tree/main/src/openai/_response.py) object.
-
-```python
-with client.chat.completions.with_streaming_response.create(
-    messages=[
-        {
-            "role": "user",
-            "content": "Say this is a test",
-        }
-    ],
-    model="hive",
-) as response:
-    print(response.headers.get("X-My-Header"))
-
-    for line in response.iter_lines():
-        print(line)
-```
-
-The context manager is required so that the response will reliably be closed.
-
 ### Configuring the HTTP client
 
 You can directly override the [httpx client](https://www.python-httpx.org/api/#client) to customize it for your use case, including:
@@ -361,10 +305,10 @@ You can directly override the [httpx client](https://www.python-httpx.org/api/#c
 
 ```python
 import httpx
-from hyperbee import Hive
+from hyperbee import HyperBee
 
-client = Hive(
-    # Or use the `HIVE_BASE_URL` env var
+client = HyperBee(
+    # Or use the `HYPERBEE_BASE_URL` env var
     base_url="http://my.test.server.example.com:8083",
     http_client=httpx.Client(
         proxies="http://my.test.proxy.example.com",

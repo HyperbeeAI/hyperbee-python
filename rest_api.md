@@ -5,13 +5,13 @@ The REST API documentation can be found [on hyperbee docs](https://api.hyperbee.
 
 ### Chat Completion Request
 
-This is a example code for chat completion request with curl. Note that you need to replace `$HIVE_API_KEY` with your actual API key. 
+This is a example code for chat completion request with curl. Note that you need to replace `$HYPERBEE_API_KEY` with your actual API key. 
 
 ```curl
 curl -X 'POST' \
   'https://api.hyperbee.ai/v1/chat/completions' \
   -H 'accept: application/json' \
-  -H 'Authorization: Bearer $HIVE_API_KEY' \
+  -H 'Authorization: Bearer $HYPERBEE_API_KEY' \
   -H 'Content-Type: application/json' \
   -d '{
   "model": "hive",
@@ -42,7 +42,7 @@ payload = {
 }
 headers = {
     'accept': 'application',
-    'Authorization': f'Bearer {os.environ["HIVE_API_KEY"]}', # Replace with your actual API key or set it as environment variable
+    'Authorization': f'Bearer {os.environ["HYPERBEE_API_KEY"]}', # Replace with your actual API key or set it as environment variable
     'Content-Type': 'application/json'
 }
 
@@ -64,7 +64,7 @@ Example output:<br>
       "index": 0,
       "message": {
         "role": "assistant",
-        "content": "Memnuniyetle bilgi vereyim:\n\nHyperbeeAI, 2023 yılında Palo Alto, Kaliforniya'da kurulmuş bir yapay zeka şirketidir. Şirketin odaklandığı başlıca alanlar arasında doğal dil işleme, makine öğrenimi, bilişsel bilimler ve robot bilimi yer alıyor.\n\nHyperbeeAI, insanlarla etkileşime geçebilen, bağlam farkındalığına sahip ve bilgi tabanlı yapay zeka asistanları geliştiriyor. Şirket, kullanıcıların çeşitli görevleri gerçekleştirmelerine ve problemleri çözmelerine yardımcı olmayı amaçlıyor.\n\nBen de HyperbeeAI tarafından geliştirilmiş bir yapay zeka asistanıyım, adım Hive. Kullanıcılara bil"
+        "content": "Memnuniyetle bilgi vereyim:\n\nHyperbeeAI, 2023 yılında Palo Alto, Kaliforniya'da kurulmuş bir yapay zeka şirketidir. Şirketin odaklandığı başlıca alanlar arasında doğal dil işleme, makine öğrenimi, bilişsel bilimler ve robot bilimi yer alıyor.\n\nHyperbeeAI, insanlarla etkileşime geçebilen, bağlam farkındalığına sahip ve bilgi tabanlı yapay zeka asistanları geliştiriyor. Şirket, kullanıcıların çeşitli görevleri gerçekleştirmelerine ve problemleri çözmelerine yardımcı olmayı amaçlıyor.\n\nBen de HyperbeeAI tarafından geliştirilmiş bir yapay zeka asistanıyım, adım HyperChat. Kullanıcılara bil"
       },
       "finish_reason": "length"
     }

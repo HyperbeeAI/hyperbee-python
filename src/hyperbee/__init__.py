@@ -8,13 +8,13 @@ from typing_extensions import override
 from openai import types
 from openai._types import NoneType, Transport, ProxiesTypes
 from openai._utils import file_from_path
-from ._client import Client, Hive, Stream, Timeout, Transport, AsyncClient, AsyncHive, AsyncStream, RequestOptions
+from ._client import Client, HyperBee, Stream, Timeout, Transport, AsyncClient, AsyncHyperBee, AsyncStream, RequestOptions
 from openai._models import BaseModel
 from ._version import __title__, __version__
 from openai._response import APIResponse as APIResponse, AsyncAPIResponse as AsyncAPIResponse
 from openai._exceptions import (
     APIError,
-    OpenAIError as HiveError,
+    OpenAIError as HyperBeeError,
     ConflictError,
     NotFoundError,
     APIStatusError,
@@ -37,7 +37,7 @@ __all__ = [
     "NoneType",
     "Transport",
     "ProxiesTypes",
-    "HiveError",
+    "HyperBeeError",
     "APIError",
     "APIStatusError",
     "APITimeoutError",
@@ -57,8 +57,8 @@ __all__ = [
     "AsyncClient",
     "Stream",
     "AsyncStream",
-    "Hive",
-    "AsyncHive",
+    "HyperBee",
+    "AsyncHyperBee",
     "file_from_path",
     "BaseModel",
 ]
@@ -107,14 +107,14 @@ http_client: _httpx.Client | None = None
 
 _ApiType = _te.Literal["hive"]
 
-api_type: _ApiType | None = _t.cast(_ApiType, _os.environ.get("HIVE_API_TYPE"))
+api_type: _ApiType | None = _t.cast(_ApiType, _os.environ.get("HYPERBEE_API_TYPE"))
 
-api_version: str | None = _os.environ.get("HIVE_API_VERSION")
-
-
+api_version: str | None = _os.environ.get("HYPERBEE_API_VERSION")
 
 
-class _ModuleClient(Hive):
+
+
+class _ModuleClient(HyperBee):
     # Note: we have to use type: ignores here as overriding class members
     # with properties is technically unsafe but it is fine for our use case
 
@@ -209,23 +209,23 @@ class _ModuleClient(Hive):
 
 
 def _has_hive_credentials() -> bool:
-    return _os.environ.get("HIVE_API_KEY") is not None
+    return _os.environ.get("HYPERBEE_API_KEY") is not None
 
 
 
 
 
-_client: Hive | None = None
+_client: HyperBee | None = None
 
 
-def _load_client() -> Hive:  # type: ignore[reportUnusedFunction]
+def _load_client() -> HyperBee:  # type: ignore[reportUnusedFunction]
     global _client
 
     if _client is None:
         global api_type, api_version
 
         if api_version is None:
-            api_version = _os.environ.get("HIVE_API_VERSION")
+            api_version = _os.environ.get("HYPERBEE_API_VERSION")
 
         if api_type is None:
             has_hive = _has_hive_credentials()
