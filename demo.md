@@ -3,7 +3,7 @@
 This is a example code for chat demo with gradio.
 
 Install necessary packages:
-```pip install gradio git+https://github.com/HyperbeeAI/hive-python```
+```pip install gradio hyperbee```
 
 demo.py file:
 ```python

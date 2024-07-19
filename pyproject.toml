@@ -1,6 +1,6 @@
 [project]
 name = "hyperbee"
-version = "0.0.2.5"
+version = "0.0.2.6"
 description = "The official Python library for the hyperbee API"
 readme = "README.md"
 license = "Apache-2.0"
@@ -41,8 +41,8 @@ classifiers = [
 datalib = ["numpy >= 1", "pandas >= 1.2.3", "pandas-stubs >= 1.1.0.11"]
 
 [project.urls]
-Homepage = "https://github.com/HyperbeeAI/hive-python"
-Repository = "https://github.com/HyperbeeAI/hive-python"
+Homepage = "https://github.com/HyperbeeAI/hyperbee-python"
+Repository = "https://github.com/HyperbeeAI/hyperbee-python"
 
 
 [tool.rye]
