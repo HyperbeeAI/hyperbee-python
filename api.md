@@ -26,7 +26,7 @@ chat_completion = client.chat.completions.create(
             "content": "Say this is a test",
         }
     ],
-    model="hive",
+    model="hyperchat",
 )
 ```
 
@@ -58,7 +58,7 @@ async def main() -> None:
                 "content": "Say this is a test",
             }
         ],
-        model="hive",
+        model="hyperchat",
     )
 
 
@@ -77,7 +77,7 @@ from hyperbee import HyperBee
 client = HyperBee()
 
 stream = client.chat.completions.create(
-    model="hive",
+    model="hyperchat",
     messages=[{"role": "user", "content": "Say this is a test"}],
     stream=True,
 )
@@ -95,7 +95,7 @@ client = AsyncHyperBee()
 
 async def main():
     stream = await client.chat.completions.create(
-        model="hive",
+        model="hyperchat",
         messages=[{"role": "user", "content": "Say this is a test"}],
         stream=True,
     )
@@ -124,7 +124,7 @@ hyperbee.base_url = "https://..."
 hyperbee.default_headers = {"x-foo": "true"}
 
 completion = hyperbee.chat.completions.create(
-    model="hive",
+    model="hyperchat",
     messages=[
         {
             "role": "user",
@@ -171,7 +171,7 @@ completion = client.chat.completions.create(
             "content": "Can you generate an example json object describing a fruit?",
         }
     ],
-    model="hive",
+    model="hyperchat",
     response_format={"type": "json_object"},
 )
 ```
@@ -224,7 +224,7 @@ client.with_options(max_retries=5).chat.completions.create(
             "content": "How can I get the name of the current day in Node.js?",
         }
     ],
-    model="hive",
+    model="hyperchat",
 )
 ```
 
@@ -255,7 +255,7 @@ client.with_options(timeout=5 * 1000).chat.completions.create(
             "content": "How can I list all files in a directory using Python?",
         }
     ],
-    model="hive",
+    model="hyperchat",
 )
 ```
 

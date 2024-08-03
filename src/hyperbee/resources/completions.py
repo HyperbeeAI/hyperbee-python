@@ -35,7 +35,7 @@ class Completions(SyncAPIResource):
     def create(
         self,
         *,
-        model: Union[str, Literal["hive"]],
+        model: Union[str, Literal["hyperchat"]],
         prompt: Union[str, List[str], Iterable[int], Iterable[Iterable[int]], None],
         best_of: Optional[int] | NotGiven = NOT_GIVEN,
         echo: Optional[bool] | NotGiven = NOT_GIVEN,
@@ -69,7 +69,7 @@ class Completions(SyncAPIResource):
     def create(
         self,
         *,
-        model: Union[str, Literal["hive"]],
+        model: Union[str, Literal["hyperchat"]],
         prompt: Union[str, List[str], Iterable[int], Iterable[Iterable[int]], None],
         stream: Literal[True],
         best_of: Optional[int] | NotGiven = NOT_GIVEN,
@@ -103,7 +103,7 @@ class Completions(SyncAPIResource):
     def create(
         self,
         *,
-        model: Union[str, Literal["hive"]],
+        model: Union[str, Literal["hyperchat"]],
         prompt: Union[str, List[str], Iterable[int], Iterable[Iterable[int]], None],
         stream: bool,
         best_of: Optional[int] | NotGiven = NOT_GIVEN,
@@ -137,7 +137,7 @@ class Completions(SyncAPIResource):
     def create(
         self,
         *,
-        model: Union[str, Literal["hive"]],
+        model: Union[str, Literal["hyperchat"]],
         prompt: Union[str, List[str], Iterable[int], Iterable[Iterable[int]], None],
         best_of: Optional[int] | NotGiven = NOT_GIVEN,
         echo: Optional[bool] | NotGiven = NOT_GIVEN,
@@ -322,7 +322,7 @@ class AsyncCompletions(AsyncAPIResource):
     async def create(
         self,
         *,
-        model: Union[str, Literal["hive"]],
+        model: Union[str, Literal["hyperchat"]],
         prompt: Union[str, List[str], Iterable[int], Iterable[Iterable[int]], None],
         best_of: Optional[int] | NotGiven = NOT_GIVEN,
         echo: Optional[bool] | NotGiven = NOT_GIVEN,
@@ -356,7 +356,7 @@ class AsyncCompletions(AsyncAPIResource):
     async def create(
         self,
         *,
-        model: Union[str, Literal["hive"]],
+        model: Union[str, Literal["hyperchat"]],
         prompt: Union[str, List[str], Iterable[int], Iterable[Iterable[int]], None],
         stream: Literal[True],
         best_of: Optional[int] | NotGiven = NOT_GIVEN,
@@ -390,7 +390,7 @@ class AsyncCompletions(AsyncAPIResource):
     async def create(
         self,
         *,
-        model: Union[str, Literal["hive"]],
+        model: Union[str, Literal["hyperchat"]],
         prompt: Union[str, List[str], Iterable[int], Iterable[Iterable[int]], None],
         stream: bool,
         best_of: Optional[int] | NotGiven = NOT_GIVEN,
@@ -424,7 +424,7 @@ class AsyncCompletions(AsyncAPIResource):
     async def create(
         self,
         *,
-        model: Union[str, Literal["hive"]],
+        model: Union[str, Literal["hyperchat"]],
         prompt: Union[str, List[str], Iterable[int], Iterable[Iterable[int]], None],
         best_of: Optional[int] | NotGiven = NOT_GIVEN,
         echo: Optional[bool] | NotGiven = NOT_GIVEN,

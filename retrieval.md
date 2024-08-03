@@ -36,8 +36,8 @@ If you prefer to use the API, follow these steps after setting up your collectio
      "messages": [
        {"role": "user", "content": "Which countries have players about different sports?"}
      ],
-     "model": "hive",
-     "optimization": "quality"
+     "model": "hyperchat",
+     "optimization": "premium"
    }'
    ```
 Replace `<YOUR_API_KEY>` with your API key and `<YOUR_NAMESPACE_ID>` with your collection ID.

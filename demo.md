@@ -25,7 +25,7 @@ def predict(message, history):
     history_openai_format.append({"role": "user", "content": message})
 
     response = client.chat.completions.create(
-        model="hive", messages=history_openai_format, temperature=0.4, stream=True
+        model="hyperchat", messages=history_openai_format, temperature=0.4, stream=True
     )
 
     partial_message = ""

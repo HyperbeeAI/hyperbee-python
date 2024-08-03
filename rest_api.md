@@ -14,7 +14,7 @@ curl -X 'POST' \
   -H 'Authorization: Bearer $HYPERBEE_API_KEY' \
   -H 'Content-Type: application/json' \
   -d '{
-  "model": "hive",
+  "model": "hyperchat",
   "messages":[
         {"role": "system", "content": "Sen yardımcı bir yapay zeka asistanısın."},
         {"role": "user", "content": "Merhaba, Hyperbee ai hakkında bilgi almak istiyorum."}
@@ -33,7 +33,7 @@ import os
 url = "https://api.hyperbee.ai/v1/chat/completions"
 
 payload = {
-    "model": "hive",
+    "model": "hyperchat",
     "messages":[
         {"role": "system", "content": "Sen yardımcı bir yapay zeka asistanısın."},
         {"role": "user", "content": "Merhaba, Hyperbee ai hakkında bilgi almak istiyorum."}
@@ -57,7 +57,7 @@ Example output:<br>
   "object": "chat.completion",
   "created": 1710440338,
   "model": [
-    "hive"
+    "hyperchat"
   ],
   "choices": [
     {

@@ -46,10 +46,10 @@ class Completions(SyncAPIResource):
         model: Union[
             str,
             Literal[
-                "hive",
+                "hyperchat",
             ],
         ],
-        optimization: Optional[Literal["cost", "quality", "auto"]] | NotGiven = NOT_GIVEN,
+        optimization: Optional[Literal["fast", "premium", "auto"]] | NotGiven = NOT_GIVEN,
         frequency_penalty: Optional[float] | NotGiven = NOT_GIVEN,
         logit_bias: Optional[Dict[str, int]] | NotGiven = NOT_GIVEN,
         logprobs: Optional[bool] | NotGiven = NOT_GIVEN,
@@ -87,11 +87,11 @@ class Completions(SyncAPIResource):
         model: Union[
             str,
             Literal[
-                "hive",
+                "hyperchat",
             ],
         ],
         stream: Literal[True],
-        optimization: Optional[Literal["cost", "quality", "auto"]] | NotGiven = NOT_GIVEN,
+        optimization: Optional[Literal["fast", "premium", "auto"]] | NotGiven = NOT_GIVEN,
         frequency_penalty: Optional[float] | NotGiven = NOT_GIVEN,
         logit_bias: Optional[Dict[str, int]] | NotGiven = NOT_GIVEN,
         logprobs: Optional[bool] | NotGiven = NOT_GIVEN,
@@ -129,11 +129,11 @@ class Completions(SyncAPIResource):
         model: Union[
             str,
             Literal[
-                "hive",
+                "hyperchat",
             ],
         ],
         stream: bool,
-        optimization: Optional[Literal["cost", "quality", "auto"]] | NotGiven = NOT_GIVEN,
+        optimization: Optional[Literal["fast", "premium", "auto"]] | NotGiven = NOT_GIVEN,
         frequency_penalty: Optional[float] | NotGiven = NOT_GIVEN,
         logit_bias: Optional[Dict[str, int]] | NotGiven = NOT_GIVEN,
         logprobs: Optional[bool] | NotGiven = NOT_GIVEN,
@@ -172,10 +172,10 @@ class Completions(SyncAPIResource):
         model: Union[
             str,
             Literal[
-                "hive",
+                "hyperchat",
             ],
         ],
-        optimization: Optional[Literal["cost", "quality", "auto"]] | NotGiven = NOT_GIVEN,
+        optimization: Optional[Literal["fast", "premium", "auto"]] | NotGiven = NOT_GIVEN,
         frequency_penalty: Optional[float] | NotGiven = NOT_GIVEN,
         logit_bias: Optional[Dict[str, int]] | NotGiven = NOT_GIVEN,
         logprobs: Optional[bool] | NotGiven = NOT_GIVEN,
@@ -387,10 +387,10 @@ class AsyncCompletions(AsyncAPIResource):
         model: Union[
             str,
             Literal[
-                "hive",
+                "hyperchat",
             ],
         ],
-        optimization: Optional[Literal["cost", "quality", "auto"]] | NotGiven = NOT_GIVEN,
+        optimization: Optional[Literal["fast", "premium", "auto"]] | NotGiven = NOT_GIVEN,
         frequency_penalty: Optional[float] | NotGiven = NOT_GIVEN,
         logit_bias: Optional[Dict[str, int]] | NotGiven = NOT_GIVEN,
         logprobs: Optional[bool] | NotGiven = NOT_GIVEN,
@@ -428,11 +428,11 @@ class AsyncCompletions(AsyncAPIResource):
         model: Union[
             str,
             Literal[
-                "hive",
+                "hyperchat",
             ],
         ],
         stream: Literal[True],
-        optimization: Optional[Literal["cost", "quality", "auto"]] | NotGiven = NOT_GIVEN,
+        optimization: Optional[Literal["fast", "premium", "auto"]] | NotGiven = NOT_GIVEN,
         frequency_penalty: Optional[float] | NotGiven = NOT_GIVEN,
         logit_bias: Optional[Dict[str, int]] | NotGiven = NOT_GIVEN,
         logprobs: Optional[bool] | NotGiven = NOT_GIVEN,
@@ -470,11 +470,11 @@ class AsyncCompletions(AsyncAPIResource):
         model: Union[
             str,
             Literal[
-                "hive",
+                "hyperchat",
             ],
         ],
         stream: bool,
-        optimization: Optional[Literal["cost", "quality", "auto"]] | NotGiven = NOT_GIVEN,
+        optimization: Optional[Literal["fast", "premium", "auto"]] | NotGiven = NOT_GIVEN,
         frequency_penalty: Optional[float] | NotGiven = NOT_GIVEN,
         logit_bias: Optional[Dict[str, int]] | NotGiven = NOT_GIVEN,
         logprobs: Optional[bool] | NotGiven = NOT_GIVEN,
@@ -512,10 +512,10 @@ class AsyncCompletions(AsyncAPIResource):
         model: Union[
             str,
             Literal[
-                "hive",
+                "hyperchat",
             ],
         ],
-        optimization: Optional[Literal["cost", "quality", "auto"]] | NotGiven = NOT_GIVEN,
+        optimization: Optional[Literal["fast", "premium", "auto"]] | NotGiven = NOT_GIVEN,
         frequency_penalty: Optional[float] | NotGiven = NOT_GIVEN,
         logit_bias: Optional[Dict[str, int]] | NotGiven = NOT_GIVEN,
         logprobs: Optional[bool] | NotGiven = NOT_GIVEN,

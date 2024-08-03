@@ -42,7 +42,7 @@ class Pipeline(SyncAPIResource):
         model: Union[
             str,
             Literal[
-                "hive",
+                "hyperchat",
             ],
         ],
         task_id: Literal["classification"] | NotGiven = NOT_GIVEN,
@@ -112,7 +112,7 @@ class AsyncPipeline(AsyncAPIResource):
         model: Union[
             str,
             Literal[
-                "hive",
+                "hyperchat",
             ],
         ],
         task_id: Literal["classification"] | NotGiven = NOT_GIVEN,

@@ -76,7 +76,7 @@ __locals = locals()
 for __name in __all__:
     if not __name.startswith("__"):
         try:
-            __locals[__name].__module__ = "hive"
+            __locals[__name].__module__ = "hyperchat"
         except (TypeError, AttributeError):
             # Some of our exported symbols are builtins which we can't set attributes for.
             pass
@@ -105,7 +105,7 @@ default_query: _t.Mapping[str, object] | None = None
 
 http_client: _httpx.Client | None = None
 
-_ApiType = _te.Literal["hive"]
+_ApiType = _te.Literal["hyperchat"]
 
 api_type: _ApiType | None = _t.cast(_ApiType, _os.environ.get("HYPERBEE_API_TYPE"))
 
@@ -231,7 +231,7 @@ def _load_client() -> HyperBee:  # type: ignore[reportUnusedFunction]
             has_hive = _has_hive_credentials()
 
             if has_hive:
-                api_type = "hive"
+                api_type = "hyperchat"
             else:
                 raise Exception("No API type specified")
 
