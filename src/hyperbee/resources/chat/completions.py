@@ -7,6 +7,11 @@ from typing_extensions import Literal
 
 import httpx
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..._client import HyperBee, AsyncHyperBee
+
 from openai import _legacy_response
 from openai._types import NOT_GIVEN, Body, Query, Headers, NotGiven
 from openai._utils import required_args, maybe_transform
@@ -30,6 +35,8 @@ __all__ = ["Completions", "AsyncCompletions"]
 
 
 class Completions(SyncAPIResource):
+    _client: 'HyperBee'  # Use string annotation to avoid circular import
+    
     @cached_property
     def with_raw_response(self) -> CompletionsWithRawResponse:
         return CompletionsWithRawResponse(self)
@@ -49,6 +56,7 @@ class Completions(SyncAPIResource):
                 "hyperchat",
             ],
         ],
+        namespace: Optional[str] | NotGiven = NOT_GIVEN,
         optimization: Optional[Literal["fast", "premium", "auto"]] | NotGiven = NOT_GIVEN,
         frequency_penalty: Optional[float] | NotGiven = NOT_GIVEN,
         logit_bias: Optional[Dict[str, int]] | NotGiven = NOT_GIVEN,
@@ -91,6 +99,7 @@ class Completions(SyncAPIResource):
             ],
         ],
         stream: Literal[True],
+        namespace: Optional[str] | NotGiven = NOT_GIVEN,
         optimization: Optional[Literal["fast", "premium", "auto"]] | NotGiven = NOT_GIVEN,
         frequency_penalty: Optional[float] | NotGiven = NOT_GIVEN,
         logit_bias: Optional[Dict[str, int]] | NotGiven = NOT_GIVEN,
@@ -133,6 +142,7 @@ class Completions(SyncAPIResource):
             ],
         ],
         stream: bool,
+        namespace: Optional[str] | NotGiven = NOT_GIVEN,
         optimization: Optional[Literal["fast", "premium", "auto"]] | NotGiven = NOT_GIVEN,
         frequency_penalty: Optional[float] | NotGiven = NOT_GIVEN,
         logit_bias: Optional[Dict[str, int]] | NotGiven = NOT_GIVEN,
@@ -175,6 +185,7 @@ class Completions(SyncAPIResource):
                 "hyperchat",
             ],
         ],
+        namespace: Optional[str] | NotGiven = NOT_GIVEN,
         optimization: Optional[Literal["fast", "premium", "auto"]] | NotGiven = NOT_GIVEN,
         frequency_penalty: Optional[float] | NotGiven = NOT_GIVEN,
         logit_bias: Optional[Dict[str, int]] | NotGiven = NOT_GIVEN,
@@ -210,6 +221,8 @@ class Completions(SyncAPIResource):
           model: ID of the model to use. See the
               For now only `hive` is supported.
 
+          namespace: The namespace to use for the request.
+        
           optimization: Whether to optimize for `cost` or `quality`. If set to `auto`, 
               the API will optimize for both cost and quality. The default is `auto`.
 
@@ -332,6 +345,12 @@ class Completions(SyncAPIResource):
 
           timeout: Override the client-level default timeout for this request, in seconds"""
         
+        if namespace is not NOT_GIVEN:
+            self._client.set_base_url_for_request(namespace)
+        else:
+            self._client.set_base_url_for_request(None)
+
+        
         return self._post(
             "/chat/completions",
             body=maybe_transform(
@@ -354,6 +373,7 @@ class Completions(SyncAPIResource):
                     "top_logprobs": top_logprobs,
                     "top_p": top_p,
                     "user": user,
+                    "namespace": namespace,
                     "optimization": optimization,
                     "output_mode": output_mode,
                     "json_schema": json_schema,
@@ -371,6 +391,7 @@ class Completions(SyncAPIResource):
 
 
 class AsyncCompletions(AsyncAPIResource):
+    _client: 'AsyncHyperBee'
     @cached_property
     def with_raw_response(self) -> AsyncCompletionsWithRawResponse:
         return AsyncCompletionsWithRawResponse(self)
@@ -390,6 +411,7 @@ class AsyncCompletions(AsyncAPIResource):
                 "hyperchat",
             ],
         ],
+        namespace: Optional[str] | NotGiven = NOT_GIVEN,
         optimization: Optional[Literal["fast", "premium", "auto"]] | NotGiven = NOT_GIVEN,
         frequency_penalty: Optional[float] | NotGiven = NOT_GIVEN,
         logit_bias: Optional[Dict[str, int]] | NotGiven = NOT_GIVEN,
@@ -432,6 +454,7 @@ class AsyncCompletions(AsyncAPIResource):
             ],
         ],
         stream: Literal[True],
+        namespace: Optional[str] | NotGiven = NOT_GIVEN,
         optimization: Optional[Literal["fast", "premium", "auto"]] | NotGiven = NOT_GIVEN,
         frequency_penalty: Optional[float] | NotGiven = NOT_GIVEN,
         logit_bias: Optional[Dict[str, int]] | NotGiven = NOT_GIVEN,
@@ -474,6 +497,7 @@ class AsyncCompletions(AsyncAPIResource):
             ],
         ],
         stream: bool,
+        namespace: Optional[str] | NotGiven = NOT_GIVEN,
         optimization: Optional[Literal["fast", "premium", "auto"]] | NotGiven = NOT_GIVEN,
         frequency_penalty: Optional[float] | NotGiven = NOT_GIVEN,
         logit_bias: Optional[Dict[str, int]] | NotGiven = NOT_GIVEN,
@@ -515,6 +539,7 @@ class AsyncCompletions(AsyncAPIResource):
                 "hyperchat",
             ],
         ],
+        namespace: Optional[str] | NotGiven = NOT_GIVEN,
         optimization: Optional[Literal["fast", "premium", "auto"]] | NotGiven = NOT_GIVEN,
         frequency_penalty: Optional[float] | NotGiven = NOT_GIVEN,
         logit_bias: Optional[Dict[str, int]] | NotGiven = NOT_GIVEN,
@@ -549,6 +574,8 @@ class AsyncCompletions(AsyncAPIResource):
 
           model: ID of the model to use. See the
               For now only `hive` is supported.
+        
+          namespace: The namespace to use for the request.
 
           optimization: Whether to optimize for `cost` or `quality`. If set to `auto`, 
               the API will optimize for both cost and quality. The default is `auto`.
@@ -670,6 +697,8 @@ class AsyncCompletions(AsyncAPIResource):
           extra_body: Add additional JSON properties to the request
 
           timeout: Override the client-level default timeout for this request, in seconds"""
+        self._client.set_base_url_for_request(namespace)
+        
         return await self._post(
             "/chat/completions",
             body=maybe_transform(
@@ -692,6 +721,7 @@ class AsyncCompletions(AsyncAPIResource):
                     "top_logprobs": top_logprobs,
                     "top_p": top_p,
                     "user": user,
+                    "namespace": namespace,
                     "optimization": optimization,
                     "output_mode": output_mode,
                     "json_schema": json_schema,
