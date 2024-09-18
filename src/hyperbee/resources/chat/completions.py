@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Dict, List, Union, Iterable, Optional, overload
+from typing import Dict, List, Union, Iterable, Optional, overload, Tuple, Any
 from typing_extensions import Literal
 
 import httpx
+import time
+from os import path
 
 from typing import TYPE_CHECKING
 
@@ -388,7 +390,183 @@ class Completions(SyncAPIResource):
             stream=stream or False,
             stream_cls=Stream[ChatCompletionChunk],
         )
+    
+    ### Uploads a SINGLE FILE (not multiple) from a folderpath + filename, to a namespace
+    ### Errors out if the API returns something erroneous (other than 200)
+    ### namespace=None is accepted because that means collection creation, returns namespace ID if that's the case
+    def __file_upload(self, folderpath: str, filename: str, namespace: Optional[str], collection_name: str) -> Tuple[Optional[str], Optional[str], Optional[str]]:
+        # Note: namespace=None is allowed here because that means a namespace is being created
+        filepath = path.join(folderpath, filename)  # to make this platform-independent, i.e., avoid / vs \
+        with open(filepath, 'rb') as filedata:
+            response = httpx.post(
+                url=f"{self._client.base_url}/upload",
+                files={'file': (filename, filedata)},
+                headers={'Authorization': f'Bearer {self._client.api_key}'},
+                data={'bucket_name': "bee_collections", 'namespace': namespace, 'name': collection_name}
+            )
+            if response.status_code == 200:
+                response_json = response.json()  # Use the built-in JSON decoder
+                response_collection_namespace = response_json.get("namespace")
+                response_contact_mail = response_json.get("contact_mail")
+                response_message = response_json.get("message")
+            else:
+                raise ValueError(f'Response from remote ({response.status_code}): {response.text}')
+        
+        # if we didn't error out until now, we're OK
+        return response_collection_namespace, response_contact_mail, response_message
 
+    ### Fetches the list of documents readily available in a remote namespace
+    ### Errors out if the namespace ID is None
+    ### Errors out if the returned doc list is empty since that means either the namespace does not exist, or that it only has non-indexed files (limbo state)
+    ### Errors out if the namespace ID is None
+    ### Errors out if the returned doc list is empty since that means either the namespace does not exist, or that it only has non-indexed files (limbo state)
+    ### Errors out if the API returns something erroneous (other than 200)
+    def __get_remote_doclist(self, namespace: str) -> List[str]:
+
+        with httpx.Client() as client:
+            response = client.post(
+                url=f"{self._client.base_url}/document_list",
+                headers={'Authorization': f'Bearer {self._client.api_key}'},
+                json    = {'namespace': namespace, 'contact_mail': "random@gmail.com"}
+            )
+        
+        if response.status_code == 200:
+            remote_doclist = response.json()
+        else:
+            raise ValueError(f'Response from remote ({response.status_code}): {response.text}')
+        
+        if not remote_doclist:
+            errmsg = 'Either a namespace with this ID does not exist, or the namespace only has non-indexed files. '
+            errmsg += 'Please contact librarian@hyperbee.ai if you think you should not have received this error.'
+            raise ValueError(errmsg)
+        
+        return remote_doclist
+
+    ### Updates the bucket index after an upload / deletion, runs embedding
+    ### Errors out if the namespace ID is None
+    ### Errors out if the API returns something erroneous (other than 200)
+    def __update_index(self, namespace: str) -> dict[str, Any]:
+
+        response = httpx.post(
+            url=f"{self._client.base_url}/update",
+            headers={'Authorization': f'Bearer {self._client.api_key}'},
+            json={'namespace': namespace, 'contact_mail': "random@gmail.com"}
+        )
+        if response.status_code == 200:
+            response_message = response.json()  # Use the built-in JSON decoder
+        else:
+            raise ValueError(f'Response from remote ({response.status_code}): {response.text}')
+        
+        # if we didn't error out until now, we're OK
+        return response_message
+    
+    def __poll_collection_index(self, local_doclist: List[str], namespace: str, checkfilter: Literal["sync", "add", "remove"],
+                               sleepseconds: int = 2, timeoutseconds: int = 120, verbose: bool = False) -> None:
+
+        stop_trying = False
+        timeout_flag = False
+        start_time = time.time()
+        while not stop_trying:
+            remote_doclist = self.__get_remote_doclist(namespace=namespace)
+            if verbose:
+                print("Remote: ", remote_doclist)
+                print("Local:  ", local_doclist)
+                print(f"Checking for index completion every {sleepseconds} s, Timeout = {timeoutseconds} s. Elapsed: {time.time() - start_time:.2f} seconds")
+            else:
+                print(f"Checking for index completion every {sleepseconds} s, Timeout = {timeoutseconds} s. Elapsed: {time.time() - start_time:.2f} seconds", end="\r", flush=True)
+            
+            # apply checkfilter 
+            if checkfilter == "sync":
+                if set(local_doclist) == set(remote_doclist):  # := if local and remote match exactly
+                    stop_trying = True
+            elif checkfilter == "add":
+                if set(local_doclist) <= set(remote_doclist):  # := if local (uploaded) a subset of remote
+                    stop_trying = True
+            elif checkfilter == "remove":
+                if not set(local_doclist) & set(remote_doclist):  # := if local (deleted) is not an element of remote anymore
+                    stop_trying = True
+            
+            # timeout mechanism
+            if (time.time() - start_time) > timeoutseconds:
+                stop_trying = True
+                timeout_flag = True
+
+            # wait a bit to not hog processors
+            time.sleep(sleepseconds)
+
+        if timeout_flag:
+            print("\nIndexing check did not complete up to now. Call poll_index() again later to see if it's completed.")
+        else:
+            print("\nIndexing check complete. Checkfilter conditions are met.")
+
+
+    def add_to_collection(
+        self,
+        uploadlist: List[str],
+        namespace: str,
+        sleepseconds: int = 2,
+        timeoutseconds: int = 60,
+        verbose: bool = False,
+    ) -> None:
+        """
+        Add documents to a collection in the specified namespace.
+
+        Args:
+            uploadlist: List of file paths to upload.
+            namespace: The namespace to add the documents to.
+            contact_mail: Contact email for the operation.
+            sleepseconds: Sleep time between polling attempts (default: 2).
+            timeoutseconds: Timeout for the entire operation in seconds (default: 60).
+            verbose: Whether to print verbose output (default: False).
+
+        Raises:
+            ValueError: If namespace is None.
+        """
+        remote_doclist = self.__get_remote_doclist(namespace=namespace)
+    
+        # Extract filenames from uploadlist
+        uploadlist_filenames = [path.basename(file) for file in uploadlist]
+        
+        filesInUploadList_butNotInRemote = list(set(uploadlist_filenames) - set(remote_doclist))
+        print(f"Remote_doclist: {remote_doclist}")
+        print(f"uploadlist: {uploadlist_filenames}")
+        filesThatAlreadyExistInRemote = list(set(uploadlist_filenames) - set(filesInUploadList_butNotInRemote))
+        print("Files in local but not in remote (to be uploaded):", filesInUploadList_butNotInRemote)
+        print(f"filesInUploadList_butNotInRemote: {filesInUploadList_butNotInRemote}")
+        print(f"filesThatAlreadyExistInRemote: {filesThatAlreadyExistInRemote}")
+        if len(filesThatAlreadyExistInRemote) > 0:
+            print("The following files already exist in remote, so they will not be uploaded at this time:", filesThatAlreadyExistInRemote)
+            print("You need to delete the current version of these files from the collection (using removeFromCollection()) before uploading its next version")
+            if (len(filesInUploadList_butNotInRemote) == 0):
+                print("Nothing to upload, canceling.")
+                return
+        print("")
+        user_decision = input("Please check the lists above. Do you want to continue with the upload? (answer with just y or n)")
+
+        if(user_decision == "y"):
+            if(len(filesInUploadList_butNotInRemote) > 0):
+                ### route /upload canNOT be called with a file list, needs to iterate over list
+                for file in uploadlist:
+                    if path.basename(file) in filesInUploadList_butNotInRemote:
+                        folderpath, filename = path.split(file)
+                        self.__file_upload(folderpath, filename, namespace = namespace, collection_name = "dummy")  # collection_name is not needed for existing collections
+            
+                self.__update_index(namespace=namespace)
+            else:
+                if(verbose):
+                    print("No files to be uploaded, skipping file upload to remote")
+                return
+
+            print("Upload and indexing update triggered, starting to poll the indexing mechanism with check_index_completion() ...")
+            print("")
+            local_list_for_polling = []
+            for file in filesInUploadList_butNotInRemote:
+                _, filename = path.split(file)
+                local_list_for_polling.append(filename)
+            self.__poll_collection_index(local_doclist = local_list_for_polling, namespace = namespace, checkfilter="add",
+                                        sleepseconds = sleepseconds, timeoutseconds = timeoutseconds, verbose = verbose)
+        else:
+            print("Canceling upload")
 
 class AsyncCompletions(AsyncAPIResource):
     _client: 'AsyncHyperBee'

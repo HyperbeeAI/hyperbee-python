@@ -310,7 +310,7 @@ class AsyncHyperBee(AsyncAPIClient):
             base_url = f"https://api.hyperbee.ai/v1/"
 
         self._chat_base_url = "https://api.hyperbee.ai/v1/"
-        self._rag_base_url = "https://api-rag.hyperbee.ai/v1/"
+        self._rag_base_url = "https://not-api-rag.hyperbee.ai/v1/"
 
         super().__init__(
             version=__version__,
