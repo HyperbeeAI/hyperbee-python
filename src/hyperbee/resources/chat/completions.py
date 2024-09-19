@@ -7,8 +7,7 @@ from typing_extensions import Literal
 
 import httpx
 import time
-from os import path
-
+import os
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -396,7 +395,7 @@ class Completions(SyncAPIResource):
     ### namespace=None is accepted because that means collection creation, returns namespace ID if that's the case
     def __file_upload(self, folderpath: str, filename: str, namespace: Optional[str], collection_name: str) -> Tuple[Optional[str], Optional[str], Optional[str]]:
         # Note: namespace=None is allowed here because that means a namespace is being created
-        filepath = path.join(folderpath, filename)  # to make this platform-independent, i.e., avoid / vs \
+        filepath = os.path.join(folderpath, filename)  # to make this platform-independent, i.e., avoid / vs \
         with open(filepath, 'rb') as filedata:
             response = httpx.post(
                 url=f"{self._client.base_url}/upload",
@@ -498,7 +497,93 @@ class Completions(SyncAPIResource):
             print("\nIndexing check did not complete up to now. Call poll_index() again later to see if it's completed.")
         else:
             print("\nIndexing check complete. Checkfilter conditions are met.")
+    
+    def __update_deleted_items(self, namespace: str) -> Dict[str, Any]:
+        """
+        Updates the namespace after items have been deleted.
 
+        Args:
+            namespace: The namespace ID.
+
+        Returns:
+            Dict[str, Any]: The response message from the API.
+
+        Raises:
+            ValueError: If namespace is None.
+        """
+        with httpx.Client() as client:
+            response = client.post(
+                url=f"{self._client.base_url}/delete",
+                headers={'Authorization': f'Bearer {self._client.api_key}'},
+                json={'namespace': namespace}
+            )
+        
+        if response.status_code == 200:
+            response_message = response.json()
+        else:
+            raise ValueError(f'Response from remote ({response.status_code}): {response.text}')
+
+        return response_message
+
+    def __file_delete_from_bucket(self, namespace: str, delete_list: List[str]) -> Dict[str, Any]:
+        """
+        Deletes a list of files from a namespace (not the index, the bucket).
+
+        Args:
+            namespace: The namespace ID.
+            delete_list: List of files to delete.
+
+        Returns:
+            Dict[str, Any]: The response message from the API.
+
+        Raises:
+            ValueError: If namespace is None or delete_list is empty.
+        """
+        if not delete_list:
+            raise ValueError('Parameter *delete_list* cannot be empty while deleting files from a namespace. Please provide a valid list.')
+        
+        with httpx.Client() as client:
+            response = client.post(
+                url=f"{self._client.base_url}/delete_from_bucket",
+                headers={'Authorization': f'Bearer {self._client.api_key}'},
+                json={'namespace': namespace, 'delete_list': delete_list}
+            )
+        
+        if response.status_code == 200:
+            response_message = response.json()
+        else:
+            raise ValueError(f'Response from remote ({response.status_code}): {response.text}')
+
+        # if we didn't error out until now, we're OK
+        return response_message
+
+    def __get_local_doclist(self, folder_path: str) -> List[str]:
+        """
+        Get a list of supported documents from a local folder.
+
+        Args:
+            folder_path: The path to the folder containing the documents.
+
+        Returns:
+            List[str]: A list of supported document filenames.
+
+        Raises:
+            ValueError: If a file has no extension or an unsupported extension.
+        """
+        supported_extensions = ["pdf", "txt"]
+        local_document_list = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f))]
+        
+        for document_filename in local_document_list:
+            document_filename_components = document_filename.split(".")
+            if len(document_filename_components) == 1:
+                raise ValueError(f'File {document_filename} does not have a file extension, which is not allowed.')
+            
+            extension = document_filename_components[-1]
+            if extension not in supported_extensions:
+                supported_extensions_str = ", ".join(supported_extensions)
+                raise ValueError(f'File {document_filename} has unsupported extension "{extension}". Supported extensions are: [{supported_extensions_str}]')
+
+        return local_document_list
 
     def add_to_collection(
         self,
@@ -507,6 +592,7 @@ class Completions(SyncAPIResource):
         sleepseconds: int = 2,
         timeoutseconds: int = 60,
         verbose: bool = False,
+        approved: bool = False
     ) -> None:
         """
         Add documents to a collection in the specified namespace.
@@ -525,7 +611,7 @@ class Completions(SyncAPIResource):
         remote_doclist = self.__get_remote_doclist(namespace=namespace)
     
         # Extract filenames from uploadlist
-        uploadlist_filenames = [path.basename(file) for file in uploadlist]
+        uploadlist_filenames = [os.path.basename(file) for file in uploadlist]
         
         filesInUploadList_butNotInRemote = list(set(uploadlist_filenames) - set(remote_doclist))
         print(f"Remote_doclist: {remote_doclist}")
@@ -536,19 +622,23 @@ class Completions(SyncAPIResource):
         print(f"filesThatAlreadyExistInRemote: {filesThatAlreadyExistInRemote}")
         if len(filesThatAlreadyExistInRemote) > 0:
             print("The following files already exist in remote, so they will not be uploaded at this time:", filesThatAlreadyExistInRemote)
-            print("You need to delete the current version of these files from the collection (using removeFromCollection()) before uploading its next version")
+            print("You need to delete the current version of these files from the collection (using remove_from_collection()) before uploading its next version")
             if (len(filesInUploadList_butNotInRemote) == 0):
                 print("Nothing to upload, canceling.")
                 return
         print("")
-        user_decision = input("Please check the lists above. Do you want to continue with the upload? (answer with just y or n)")
 
-        if(user_decision == "y"):
+        user_choice = False
+        if not approved:
+            user_decision = input("Please check the lists above. Do you want to continue with the upload? (answer with just y or n)")
+            user_choice = (user_decision.lower() == "y")
+
+        if approved or user_choice:
             if(len(filesInUploadList_butNotInRemote) > 0):
                 ### route /upload canNOT be called with a file list, needs to iterate over list
                 for file in uploadlist:
-                    if path.basename(file) in filesInUploadList_butNotInRemote:
-                        folderpath, filename = path.split(file)
+                    if os.path.basename(file) in filesInUploadList_butNotInRemote:
+                        folderpath, filename = os.path.split(file)
                         self.__file_upload(folderpath, filename, namespace = namespace, collection_name = "dummy")  # collection_name is not needed for existing collections
             
                 self.__update_index(namespace=namespace)
@@ -559,14 +649,125 @@ class Completions(SyncAPIResource):
 
             print("Upload and indexing update triggered, starting to poll the indexing mechanism with check_index_completion() ...")
             print("")
-            local_list_for_polling = []
-            for file in filesInUploadList_butNotInRemote:
-                _, filename = path.split(file)
-                local_list_for_polling.append(filename)
-            self.__poll_collection_index(local_doclist = local_list_for_polling, namespace = namespace, checkfilter="add",
+            self.__poll_collection_index(local_doclist = filesInUploadList_butNotInRemote, namespace = namespace, checkfilter="add",
                                         sleepseconds = sleepseconds, timeoutseconds = timeoutseconds, verbose = verbose)
         else:
             print("Canceling upload")
+
+    def remove_from_collection(
+        self,
+        deletionlist: List[str],
+        namespace: str,
+        sleepseconds: int = 2,
+        timeoutseconds: int = 60,
+        verbose: bool = False,
+        approved: bool = False,
+    ) -> None:
+        """
+        Removes files from an existing namespace.
+
+        This method skips files that do not exist automatically and informs the user.
+        It asks for user confirmation before deleting.
+
+        Args:
+            deletionlist (List[str]): List of files to be deleted.
+            namespace (str): The namespace from which to remove files.
+            sleepseconds (int, optional): Sleep time between polling attempts. Defaults to 2.
+            timeoutseconds (int, optional): Timeout for polling in seconds. Defaults to 60.
+            verbose (bool, optional): If True, prints verbose output. Defaults to False.
+
+        Raises:
+            ValueError: If namespace is None.
+        """
+        remote_doclist = self.__get_remote_doclist(namespace=namespace)
+
+        deletelist_filenames = [os.path.basename(file) for file in deletionlist]
+
+        filesInRemote_matchingDeletionList = set(deletelist_filenames).intersection(set(remote_doclist))
+        if len(filesInRemote_matchingDeletionList) == 0:
+            print("No files to be deleted, skipping file deletion from remote")
+            return
+        print("Files in remote that will be deleted:", list(filesInRemote_matchingDeletionList))
+        filesInDeletionList_butNotInCollection = set(deletelist_filenames) - filesInRemote_matchingDeletionList
+        if filesInDeletionList_butNotInCollection:
+            print("The following files do not exist in remote, so they cannot be deleted at this time:", list(filesInDeletionList_butNotInCollection))
+        
+        print("")
+        user_choice = False
+        if not approved:
+            user_decision = input("Please check the lists above. Do you want to continue with the deletion? (answer with just y or n)")
+            user_choice = (user_decision.lower() == "y")
+
+        if approved or user_choice:
+            self.__file_delete_from_bucket(namespace=namespace, delete_list=list(filesInRemote_matchingDeletionList))
+            self.__update_deleted_items(namespace=namespace)
+            
+            print("Deletion and indexing update triggered, starting to poll the indexing mechanism with check_index_completion() ...")
+            print("")
+            local_list_for_polling = list(filesInRemote_matchingDeletionList)
+            self.__poll_collection_index(
+                local_doclist=local_list_for_polling,
+                namespace=namespace,
+                checkfilter="remove",
+                sleepseconds=sleepseconds,
+                timeoutseconds=timeoutseconds,
+                verbose=verbose
+            )
+        else:
+            print("Canceling deletion")
+            return
+    ### Syncs local and remote folders if there are any differences between them
+    def sync_local_and_collection(
+        self,
+        folder_path: str,
+        namespace: str,
+        sleepseconds: int = 2,
+        timeoutseconds: int = 60,
+        verbose: bool = False
+    ) -> None:
+        """
+        Syncs local and remote folders if there are any differences between them.
+
+        This method asks the user for input after listing the deltas since sync is a potentially catastrophic action on the remote side.
+        Local files always win, remote gets modified accordingly.
+
+        Args:
+            folder_path (str): Path to the local folder.
+            namespace (str): The namespace to sync with.
+            sleepseconds (int, optional): Sleep time between polling attempts. Defaults to 2.
+            timeoutseconds (int, optional): Timeout for polling in seconds. Defaults to 60.
+            verbose (bool, optional): If True, prints verbose output. Defaults to False.
+
+        Returns:
+            bool: True if sync was successful, False otherwise.
+
+        Raises:
+            ValueError: If namespace is None.
+        """
+        remote_doclist = self.__get_remote_doclist(namespace=namespace)
+        local_doclist_filenames  = self.__get_local_doclist(folder_path = folder_path)
+        local_doclist = [os.path.join(folder_path, file) for file in local_doclist_filenames]
+
+        files_to_delete = list(set(remote_doclist) - set(local_doclist_filenames))
+        files_to_upload = list(set(local_doclist_filenames) - set(remote_doclist))
+
+        print("Files in remote but not in local (to be deleted):", files_to_delete)
+        print("Files in local but not in remote (to be uploaded):", files_to_upload)
+
+        print("")
+        user_decision = input("Please check the lists above. Do you want to continue with the sync? (answer with just y or n)")
+
+        if user_decision.lower() == "y":
+            if files_to_delete:
+                self.remove_from_collection(deletionlist=files_to_delete, namespace=namespace, sleepseconds=sleepseconds,
+                                             timeoutseconds=timeoutseconds, verbose=verbose, approved=True)
+            if files_to_upload:
+                self.add_to_collection(uploadlist=[file for file in local_doclist if os.path.basename(file) in files_to_upload],
+                                        namespace=namespace, sleepseconds=sleepseconds, timeoutseconds=timeoutseconds,
+                                          verbose=verbose, approved=True)
+        else:
+            print("Canceling sync")
+
 
 class AsyncCompletions(AsyncAPIResource):
     _client: 'AsyncHyperBee'
