@@ -393,7 +393,7 @@ class Completions(SyncAPIResource):
     ### Uploads a SINGLE FILE (not multiple) from a folderpath + filename, to a namespace
     ### Errors out if the API returns something erroneous (other than 200)
     ### namespace=None is accepted because that means collection creation, returns namespace ID if that's the case
-    def __file_upload(self, folderpath: str, filename: str, namespace: Optional[str], collection_name: str) -> Tuple[Optional[str], Optional[str], Optional[str]]:
+    def __file_upload(self, folderpath: str, filename: str, namespace: Optional[str], collection_name: str) -> Tuple[str, str, str]:
         # Note: namespace=None is allowed here because that means a namespace is being created
         filepath = os.path.join(folderpath, filename)  # to make this platform-independent, i.e., avoid / vs \
         with open(filepath, 'rb') as filedata:
@@ -434,7 +434,7 @@ class Completions(SyncAPIResource):
         else:
             raise ValueError(f'Response from remote ({response.status_code}): {response.text}')
         
-        if not remote_doclist:
+        if not isinstance(remote_doclist, list): # TODO: Confirm this
             errmsg = 'Either a namespace with this ID does not exist, or the namespace only has non-indexed files. '
             errmsg += 'Please contact librarian@hyperbee.ai if you think you should not have received this error.'
             raise ValueError(errmsg)
@@ -444,19 +444,18 @@ class Completions(SyncAPIResource):
     ### Updates the bucket index after an upload / deletion, runs embedding
     ### Errors out if the namespace ID is None
     ### Errors out if the API returns something erroneous (other than 200)
-    def __update_index(self, namespace: str) -> dict[str, Any]:
+    def __update_index(self, namespace: str, contact_mail: str) -> dict[str, Any]:
 
         response = httpx.post(
             url=f"{self._client.base_url}/update",
             headers={'Authorization': f'Bearer {self._client.api_key}'},
-            json={'namespace': namespace, 'contact_mail': "random@gmail.com"}
+            json={'namespace': namespace, 'contact_mail': contact_mail}
         )
         if response.status_code == 200:
             response_message = response.json()  # Use the built-in JSON decoder
         else:
             raise ValueError(f'Response from remote ({response.status_code}): {response.text}')
         
-        # if we didn't error out until now, we're OK
         return response_message
     
     def __poll_collection_index(self, local_doclist: List[str], namespace: str, checkfilter: Literal["sync", "add", "remove"],
@@ -600,7 +599,6 @@ class Completions(SyncAPIResource):
         Args:
             uploadlist: List of file paths to upload.
             namespace: The namespace to add the documents to.
-            contact_mail: Contact email for the operation.
             sleepseconds: Sleep time between polling attempts (default: 2).
             timeoutseconds: Timeout for the entire operation in seconds (default: 60).
             verbose: Whether to print verbose output (default: False).
@@ -614,12 +612,9 @@ class Completions(SyncAPIResource):
         uploadlist_filenames = [os.path.basename(file) for file in uploadlist]
         
         filesInUploadList_butNotInRemote = list(set(uploadlist_filenames) - set(remote_doclist))
-        print(f"Remote_doclist: {remote_doclist}")
-        print(f"uploadlist: {uploadlist_filenames}")
         filesThatAlreadyExistInRemote = list(set(uploadlist_filenames) - set(filesInUploadList_butNotInRemote))
         print("Files in local but not in remote (to be uploaded):", filesInUploadList_butNotInRemote)
-        print(f"filesInUploadList_butNotInRemote: {filesInUploadList_butNotInRemote}")
-        print(f"filesThatAlreadyExistInRemote: {filesThatAlreadyExistInRemote}")
+
         if len(filesThatAlreadyExistInRemote) > 0:
             print("The following files already exist in remote, so they will not be uploaded at this time:", filesThatAlreadyExistInRemote)
             print("You need to delete the current version of these files from the collection (using remove_from_collection()) before uploading its next version")
@@ -635,13 +630,17 @@ class Completions(SyncAPIResource):
 
         if approved or user_choice:
             if(len(filesInUploadList_butNotInRemote) > 0):
+                contact_mail = None
                 ### route /upload canNOT be called with a file list, needs to iterate over list
                 for file in uploadlist:
                     if os.path.basename(file) in filesInUploadList_butNotInRemote:
                         folderpath, filename = os.path.split(file)
-                        self.__file_upload(folderpath, filename, namespace = namespace, collection_name = "dummy")  # collection_name is not needed for existing collections
+                        _, contact_mail, _ = self.__file_upload(folderpath, filename, namespace = namespace, collection_name = "dummy")  # collection_name is not needed for existing collections
             
-                self.__update_index(namespace=namespace)
+                if contact_mail is not None:
+                    self.__update_index(namespace=namespace, contact_mail=contact_mail)
+                else:
+                    raise Exception("File upload error")
             else:
                 if(verbose):
                     print("No files to be uploaded, skipping file upload to remote")
