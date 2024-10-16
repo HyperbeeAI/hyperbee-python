@@ -398,7 +398,7 @@ class Completions(SyncAPIResource):
         filepath = os.path.join(folderpath, filename)  # to make this platform-independent, i.e., avoid / vs \
         with open(filepath, 'rb') as filedata:
             response = httpx.post(
-                url=f"{self._client.base_url}/upload",
+                url=f"{self._client.base_url}upload",
                 files={'file': (filename, filedata)},
                 headers={'Authorization': f'Bearer {self._client.api_key}'},
                 data={'bucket_name': "bee_collections", 'namespace': namespace, 'name': collection_name}
@@ -421,10 +421,10 @@ class Completions(SyncAPIResource):
     ### Errors out if the returned doc list is empty since that means either the namespace does not exist, or that it only has non-indexed files (limbo state)
     ### Errors out if the API returns something erroneous (other than 200)
     def __get_remote_doclist(self, namespace: str) -> List[str]:
-
+        
         with httpx.Client() as client:
             response = client.post(
-                url=f"{self._client.base_url}/document_list",
+                url=f"{self._client.base_url}document_list",
                 headers={'Authorization': f'Bearer {self._client.api_key}'},
                 json    = {'namespace': namespace, 'contact_mail': "random@gmail.com"}
             )
@@ -447,7 +447,7 @@ class Completions(SyncAPIResource):
     def __update_index(self, namespace: str, contact_mail: str) -> dict[str, Any]:
 
         response = httpx.post(
-            url=f"{self._client.base_url}/update",
+            url=f"{self._client.base_url}update",
             headers={'Authorization': f'Bearer {self._client.api_key}'},
             json={'namespace': namespace, 'contact_mail': contact_mail}
         )
@@ -512,7 +512,7 @@ class Completions(SyncAPIResource):
         """
         with httpx.Client() as client:
             response = client.post(
-                url=f"{self._client.base_url}/delete",
+                url=f"{self._client.base_url}delete",
                 headers={'Authorization': f'Bearer {self._client.api_key}'},
                 json={'namespace': namespace}
             )
@@ -543,7 +543,7 @@ class Completions(SyncAPIResource):
         
         with httpx.Client() as client:
             response = client.post(
-                url=f"{self._client.base_url}/delete_from_bucket",
+                url=f"{self._client.base_url}delete_from_bucket",
                 headers={'Authorization': f'Bearer {self._client.api_key}'},
                 json={'namespace': namespace, 'delete_list': delete_list}
             )
