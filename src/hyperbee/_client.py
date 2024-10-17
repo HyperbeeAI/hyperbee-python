@@ -103,6 +103,9 @@ class HyperBee(SyncAPIClient):
         if base_url is None:
             base_url = f"https://api.hyperbee.ai/v1/"
 
+        self._chat_base_url = "https://api.hyperbee.ai/v1/"
+        self._rag_base_url = "https://api-rag.hyperbee.ai/v1/"
+
         super().__init__(
             version=__version__,
             base_url=base_url,
@@ -123,6 +126,23 @@ class HyperBee(SyncAPIClient):
         self.with_streaming_response = HyperBeeWithStreamedResponse(self)
         self.pipeline = resources.Pipeline(self)
         self.batch_request = resources.batch_request(self)
+
+    def set_base_url_for_request(self, namespace: str | None = None):
+        new_base_url = self._rag_base_url if namespace not in (None, NOT_GIVEN) else self._chat_base_url
+
+        if new_base_url != self.base_url:
+            # Reinitialize the client with the new base URL
+            self.__init__(
+                api_key=self.api_key,
+                organization=self.organization,
+                base_url=new_base_url,
+                timeout=self.timeout,
+                max_retries=self.max_retries,
+                default_headers=self._custom_headers,
+                default_query=self._custom_query,
+                http_client=self._client,
+                _strict_response_validation=self._strict_response_validation,
+            )
 
     @property
     @override
@@ -289,6 +309,9 @@ class AsyncHyperBee(AsyncAPIClient):
         if base_url is None:
             base_url = f"https://api.hyperbee.ai/v1/"
 
+        self._chat_base_url = "https://api.hyperbee.ai/v1/"
+        self._rag_base_url = "https://not-api-rag.hyperbee.ai/v1/"
+
         super().__init__(
             version=__version__,
             base_url=base_url,
@@ -308,6 +331,23 @@ class AsyncHyperBee(AsyncAPIClient):
         self.with_raw_response = AsyncHyperBeeWithRawResponse(self)
         self.with_streaming_response = AsyncHyperBeeWithStreamedResponse(self)
         self.pipeline = resources.AsyncPipeline(self)
+
+    def set_base_url_for_request(self, namespace: str | None = None):
+        new_base_url = self._rag_base_url if namespace not in (None, NOT_GIVEN) else self._chat_base_url
+
+        if new_base_url != self.base_url:
+            # Reinitialize the client with the new base URL
+            self.__init__(
+                api_key=self.api_key,
+                organization=self.organization,
+                base_url=new_base_url,
+                timeout=self.timeout,
+                max_retries=self.max_retries,
+                default_headers=self._custom_headers,
+                default_query=self._custom_query,
+                http_client=self._client,
+                _strict_response_validation=self._strict_response_validation,
+            )
 
     @property
     @override
