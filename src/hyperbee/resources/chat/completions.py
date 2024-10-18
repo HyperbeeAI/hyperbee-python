@@ -404,7 +404,9 @@ class Completions(SyncAPIResource):
     ### Errors out if the returned doc list is empty since that means either the namespace does not exist, or that it only has non-indexed files (limbo state)
     ### Errors out if the API returns something erroneous (other than 200)
     def get_remote_doclist(self, namespace: str) -> List[str]:
-
+        if self._client.base_url != self._client._rag_base_url:
+            self._client.set_base_url_for_request(namespace)
+        
         with httpx.Client() as client:
             response = client.post(
                 url=f"{self._client.base_url}document_list",
@@ -609,6 +611,8 @@ class Completions(SyncAPIResource):
         Raises:
             ValueError: If namespace is None.
         """
+        if self._client.base_url != self._client._rag_base_url:
+            self._client.set_base_url_for_request(namespace)
         remote_doclist = self.get_remote_doclist(namespace=namespace)
 
         # Extract filenames from uploadlist
@@ -698,6 +702,8 @@ class Completions(SyncAPIResource):
         Raises:
             ValueError: If namespace is None.
         """
+        if self._client.base_url != self._client._rag_base_url:
+            self._client.set_base_url_for_request(namespace)
         remote_doclist = self.get_remote_doclist(namespace=namespace)
 
         deletelist_filenames = [os.path.basename(file) for file in deletionlist]
@@ -766,6 +772,8 @@ class Completions(SyncAPIResource):
         Raises:
             ValueError: If namespace is None.
         """
+        if self._client.base_url != self._client._rag_base_url:
+            self._client.set_base_url_for_request(namespace)
         remote_doclist = self.get_remote_doclist(namespace=namespace)
         local_doclist_filenames = self.__get_local_doclist(folder_path=folder_path)
         local_doclist = [os.path.join(folder_path, file) for file in local_doclist_filenames]
