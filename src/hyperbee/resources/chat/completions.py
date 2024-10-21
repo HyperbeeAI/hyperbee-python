@@ -96,6 +96,7 @@ class Completions(SyncAPIResource):
         ],
         stream: Literal[True],
         namespace: Optional[str] | NotGiven = NOT_GIVEN,
+        max_num_results: Optional[int] | NotGiven = NOT_GIVEN,
         optimization: Optional[Literal["fast", "premium", "auto"]] | NotGiven = NOT_GIVEN,
         frequency_penalty: Optional[float] | NotGiven = NOT_GIVEN,
         logit_bias: Optional[Dict[str, int]] | NotGiven = NOT_GIVEN,
@@ -135,6 +136,7 @@ class Completions(SyncAPIResource):
         ],
         stream: bool,
         namespace: Optional[str] | NotGiven = NOT_GIVEN,
+        max_num_results: Optional[int] | NotGiven = NOT_GIVEN,
         optimization: Optional[Literal["fast", "premium", "auto"]] | NotGiven = NOT_GIVEN,
         frequency_penalty: Optional[float] | NotGiven = NOT_GIVEN,
         logit_bias: Optional[Dict[str, int]] | NotGiven = NOT_GIVEN,
@@ -173,6 +175,7 @@ class Completions(SyncAPIResource):
             Literal["hyperchat",],
         ],
         namespace: Optional[str] | NotGiven = NOT_GIVEN,
+        max_num_results: Optional[int] | NotGiven = NOT_GIVEN,
         optimization: Optional[Literal["fast", "premium", "auto"]] | NotGiven = NOT_GIVEN,
         frequency_penalty: Optional[float] | NotGiven = NOT_GIVEN,
         logit_bias: Optional[Dict[str, int]] | NotGiven = NOT_GIVEN,
@@ -209,6 +212,8 @@ class Completions(SyncAPIResource):
               For now only `hive` is supported.
 
           namespace: The namespace to use for the request.
+
+          max_num_results: The maximum number of results to include in the context.
 
           optimization: Whether to optimize for `cost` or `quality`. If set to `auto`,
               the API will optimize for both cost and quality. The default is `auto`.
@@ -360,6 +365,7 @@ class Completions(SyncAPIResource):
                     "top_p": top_p,
                     "user": user,
                     "namespace": namespace,
+                    "max_num_results": max_num_results,
                     "optimization": optimization,
                     "output_mode": output_mode,
                     "json_schema": json_schema,
@@ -378,16 +384,21 @@ class Completions(SyncAPIResource):
     ### Errors out if the API returns something erroneous (other than 200)
     ### namespace=None is accepted because that means collection creation, returns namespace ID if that's the case
     def __file_upload(
-        self, folderpath: str, filename: str, namespace: Optional[str], collection_name: str
+        self, folderpath: str, filename: str, namespace: Optional[str] | None, collection_name: str
     ) -> Tuple[str, str, str]:
         # Note: namespace=None is allowed here because that means a namespace is being created
+        COLLECTIONS = "bee_collections"
         filepath = os.path.join(folderpath, filename)  # to make this platform-independent, i.e., avoid / vs \
         with open(filepath, "rb") as filedata:
+            data={"bucket_name": COLLECTIONS, "name": collection_name}
+            if namespace is not None:
+                data["namespace"] = namespace
+            
             response = httpx.post(
                 url=f"{self._client.base_url}upload",
                 files={"file": (filename, filedata)},
                 headers={"Authorization": f"Bearer {self._client.api_key}"},
-                data={"bucket_name": "bee_collections", "namespace": namespace, "name": collection_name},
+                data=data,
             )
             if response.status_code == 200:
                 response_json = response.json()  # Use the built-in JSON decoder
@@ -451,7 +462,7 @@ class Completions(SyncAPIResource):
         sleepseconds: int = 2,
         timeoutseconds: int = 120,
         verbose: bool = False,
-    ) -> None:
+    ) -> bool:
 
         stop_trying = False
         timeout_flag = False
@@ -496,8 +507,10 @@ class Completions(SyncAPIResource):
             print(
                 "\nIndexing check did not complete up to now. Call poll_index() again later to see if it's completed."
             )
+            return False
         else:
             print("\nIndexing check complete. Checkfilter conditions are met.")
+            return True
 
     def __update_deleted_items(self, namespace: str) -> Dict[str, Any]:
         """
@@ -589,15 +602,28 @@ class Completions(SyncAPIResource):
 
         return local_document_list
 
+    def create_namespace(self, file_list: List[str], sleepseconds: int = 10, timeoutseconds: int = 60, verbose: bool = True) -> str:
+        try:
+            namespace = self.add_to_collection(file_list, None, sleepseconds=sleepseconds, timeoutseconds=timeoutseconds,
+                                                verbose=verbose, approved=True)
+        except Exception as e:
+            print(f"Failed to create namespace: {str(e)}")
+            return ""
+        
+        if namespace is None:
+            raise ValueError("Failed to create namespace")
+        else:
+            return namespace
+
     def add_to_collection(
         self,
         uploadlist: List[str],
-        namespace: str,
+        namespace: str | None,
         sleepseconds: int = 2,
         timeoutseconds: int = 60,
         verbose: bool = False,
         approved: bool = False,
-    ) -> None:
+    ) -> None | Tuple[str, str]:
         """
         Add documents to a collection in the specified namespace.
 
@@ -607,73 +633,77 @@ class Completions(SyncAPIResource):
             sleepseconds: Sleep time between polling attempts (default: 2).
             timeoutseconds: Timeout for the entire operation in seconds (default: 60).
             verbose: Whether to print verbose output (default: False).
-
-        Raises:
-            ValueError: If namespace is None.
         """
         if self._client.base_url != self._client._rag_base_url:
-            self._client.set_base_url_for_request(namespace)
-        remote_doclist = self.get_remote_doclist(namespace=namespace)
-
-        # Extract filenames from uploadlist
-        uploadlist_filenames = [os.path.basename(file) for file in uploadlist]
-
-        filesInUploadList_butNotInRemote = list(set(uploadlist_filenames) - set(remote_doclist))
-        filesThatAlreadyExistInRemote = list(set(uploadlist_filenames) - set(filesInUploadList_butNotInRemote))
-        print("Files in local but not in remote (to be uploaded):", filesInUploadList_butNotInRemote)
-
-        if len(filesThatAlreadyExistInRemote) > 0:
-            print(
-                "The following files already exist in remote, so they will not be uploaded at this time:",
-                filesThatAlreadyExistInRemote,
-            )
-            print(
-                "You need to delete the current version of these files from the collection (using remove_from_collection()) before uploading its next version"
-            )
-            if len(filesInUploadList_butNotInRemote) == 0:
-                print("Nothing to upload, canceling.")
-                return
-        print("")
-
+            self._client.set_base_url_for_request("placeholder")
+        
         user_choice = False
-        if not approved:
-            user_decision = input(
-                "Please check the lists above. Do you want to continue with the upload? (answer with just y or n)"
-            )
-            user_choice = user_decision.lower() == "y"
+        if namespace is not None:
+            remote_doclist = self.get_remote_doclist(namespace=namespace)
 
-        if approved or user_choice:
-            if len(filesInUploadList_butNotInRemote) > 0:
-                contact_mail = None
-                ### route /upload canNOT be called with a file list, needs to iterate over list
-                for file in uploadlist:
-                    if os.path.basename(file) in filesInUploadList_butNotInRemote:
-                        folderpath, filename = os.path.split(file)
-                        _, contact_mail, _ = self.__file_upload(
-                            folderpath, filename, namespace=namespace, collection_name="dummy"
-                        )  # collection_name is not needed for existing collections
+            # Extract filenames from uploadlist
+            uploadlist_filenames = [os.path.basename(file) for file in uploadlist]
 
-                if contact_mail is not None:
-                    self.__update_index(namespace=namespace, contact_mail=contact_mail)
-                else:
-                    raise Exception("File upload error")
-            else:
+            filesInUploadList_butNotInRemote = list(set(uploadlist_filenames) - set(remote_doclist))
+            filesThatAlreadyExistInRemote = list(set(uploadlist_filenames) - set(filesInUploadList_butNotInRemote))
+            print("Files in local but not in remote (to be uploaded):", filesInUploadList_butNotInRemote)
+
+            if len(filesThatAlreadyExistInRemote) > 0:
+                print(
+                    "The following files already exist in remote, so they will not be uploaded at this time:",
+                    filesThatAlreadyExistInRemote,
+                )
+                print(
+                    "You need to delete the current version of these files from the collection (using remove_from_collection()) before uploading its next version"
+                )
+                if len(filesInUploadList_butNotInRemote) == 0:
+                    print("Nothing to upload, canceling.")
+                    return
+            print("")
+
+            if not approved:
+                user_decision = input(
+                    "Please check the lists above. Do you want to continue with the upload? (answer with just y or n)"
+                )
+                user_choice = user_decision.lower() == "y"
+            if len(filesInUploadList_butNotInRemote) == 0:
                 if verbose:
                     print("No files to be uploaded, skipping file upload to remote")
                 return
+        else:
+            filesInUploadList_butNotInRemote = [os.path.basename(file) for file in uploadlist]
+
+        if approved or user_choice:
+            contact_mail = None
+            received_namespace = ""
+            ### route /upload canNOT be called with a file list, needs to iterate over list
+            for file in uploadlist:
+                if os.path.basename(file) in filesInUploadList_butNotInRemote:
+                    folderpath, filename = os.path.split(file)
+                    received_namespace, contact_mail, _ = self.__file_upload(
+                        folderpath, filename, namespace=namespace, collection_name="dummy"
+                    )  # collection_name is not needed for existing collections
+
+            if contact_mail is not None:
+                self.__update_index(namespace=received_namespace, contact_mail=contact_mail)
+            else:
+                raise Exception("File upload error")
 
             print(
                 "Upload and indexing update triggered, starting to poll the indexing mechanism with check_index_completion() ..."
             )
             print("")
-            self.__poll_collection_index(
+            success = self.__poll_collection_index(
                 local_doclist=filesInUploadList_butNotInRemote,
-                namespace=namespace,
+                namespace=received_namespace,
                 checkfilter="add",
                 sleepseconds=sleepseconds,
                 timeoutseconds=timeoutseconds,
                 verbose=verbose,
             )
+            status = "Ready" if success else "Pending"
+            if namespace is None:
+                return received_namespace, status
         else:
             print("Canceling upload")
 
@@ -737,7 +767,7 @@ class Completions(SyncAPIResource):
             )
             print("")
             local_list_for_polling = list(filesInRemote_matchingDeletionList)
-            self.__poll_collection_index(
+            _ = self.__poll_collection_index(
                 local_doclist=local_list_for_polling,
                 namespace=namespace,
                 checkfilter="remove",
