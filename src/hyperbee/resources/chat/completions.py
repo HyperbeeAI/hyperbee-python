@@ -692,7 +692,16 @@ class Completions(SyncAPIResource):
             sleepseconds: Sleep time between polling attempts (default: 2).
             timeoutseconds: Timeout for the entire operation in seconds (default: 60).
             verbose: Whether to print verbose output (default: False).
+
+        Returns:
+            Tuple[str, str]: A tuple containing the namespace identifier and the status of the operation, only if namespace is created for the first time.
+
+        Raises:
+            ValueError: If the given parameters' types are not matching.
         """
+        if not isinstance(uploadlist, list) or not all(isinstance(item, str) for item in uploadlist):
+            raise ValueError("uploadlist must be a list of strings.")
+
         if self._client.base_url != self._client._rag_base_url:
             self._client.set_base_url_for_request("placeholder")
 
@@ -854,8 +863,13 @@ class Completions(SyncAPIResource):
             verbose (bool, optional): If True, prints verbose output. Defaults to False.
 
         Raises:
-            ValueError: If namespace is None.
+            ValueError: If the given parameters' types are not matching.
         """
+        if not isinstance(namespace, str):
+            raise ValueError("Namespace must be a non-empty string.")
+        if not isinstance(deletionlist, list) or not all(isinstance(item, str) for item in deletionlist):
+            raise ValueError("Deletion list must be a list of strings.")
+
         if self._client.base_url != self._client._rag_base_url:
             self._client.set_base_url_for_request(namespace)
         remote_doclist = self.get_remote_doclist(namespace=namespace)
@@ -903,7 +917,6 @@ class Completions(SyncAPIResource):
             print("Canceling deletion")
             return
 
-    ### Syncs local and remote folders if there are any differences between them
     def sync_local_and_collection(
         self, folder_path: str, namespace: str, sleepseconds: int = 2, timeoutseconds: int = 60, verbose: bool = False
     ) -> None:
@@ -920,14 +933,17 @@ class Completions(SyncAPIResource):
             timeoutseconds (int, optional): Timeout for polling in seconds. Defaults to 60.
             verbose (bool, optional): If True, prints verbose output. Defaults to False.
 
-        Returns:
-            bool: True if sync was successful, False otherwise.
-
         Raises:
-            ValueError: If namespace is None.
+            ValueError: If folder_path or namespace is not a string.
         """
+        if not isinstance(folder_path, str):
+            raise ValueError("folder_path must be a string.")
+        if not isinstance(namespace, str):
+            raise ValueError("namespace must be a string.")
+
         if self._client.base_url != self._client._rag_base_url:
             self._client.set_base_url_for_request(namespace)
+
         remote_doclist = self.get_remote_doclist(namespace=namespace)
         local_doclist_filenames = self.__get_local_doclist(folder_path=folder_path)
         local_doclist = [os.path.join(folder_path, file) for file in local_doclist_filenames]
