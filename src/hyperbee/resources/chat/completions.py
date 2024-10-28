@@ -37,6 +37,7 @@ __all__ = ["Completions", "AsyncCompletions"]
 
 class Completions(SyncAPIResource):
     _client: "HyperBee"  # Use string annotation to avoid circular import
+    __COLLECTIONS = "bee_collections"
 
     @cached_property
     def with_raw_response(self) -> CompletionsWithRawResponse:
@@ -96,6 +97,7 @@ class Completions(SyncAPIResource):
         ],
         stream: Literal[True],
         namespace: Optional[str] | NotGiven = NOT_GIVEN,
+        max_num_results: Optional[int] | NotGiven = NOT_GIVEN,
         optimization: Optional[Literal["fast", "premium", "auto"]] | NotGiven = NOT_GIVEN,
         frequency_penalty: Optional[float] | NotGiven = NOT_GIVEN,
         logit_bias: Optional[Dict[str, int]] | NotGiven = NOT_GIVEN,
@@ -135,6 +137,7 @@ class Completions(SyncAPIResource):
         ],
         stream: bool,
         namespace: Optional[str] | NotGiven = NOT_GIVEN,
+        max_num_results: Optional[int] | NotGiven = NOT_GIVEN,
         optimization: Optional[Literal["fast", "premium", "auto"]] | NotGiven = NOT_GIVEN,
         frequency_penalty: Optional[float] | NotGiven = NOT_GIVEN,
         logit_bias: Optional[Dict[str, int]] | NotGiven = NOT_GIVEN,
@@ -173,6 +176,7 @@ class Completions(SyncAPIResource):
             Literal["hyperchat",],
         ],
         namespace: Optional[str] | NotGiven = NOT_GIVEN,
+        max_num_results: Optional[int] | NotGiven = NOT_GIVEN,
         optimization: Optional[Literal["fast", "premium", "auto"]] | NotGiven = NOT_GIVEN,
         frequency_penalty: Optional[float] | NotGiven = NOT_GIVEN,
         logit_bias: Optional[Dict[str, int]] | NotGiven = NOT_GIVEN,
@@ -209,6 +213,8 @@ class Completions(SyncAPIResource):
               For now only `hive` is supported.
 
           namespace: The namespace to use for the request.
+
+          max_num_results: The maximum number of results to include in the context.
 
           optimization: Whether to optimize for `cost` or `quality`. If set to `auto`,
               the API will optimize for both cost and quality. The default is `auto`.
@@ -360,6 +366,7 @@ class Completions(SyncAPIResource):
                     "top_p": top_p,
                     "user": user,
                     "namespace": namespace,
+                    "max_num_results": max_num_results,
                     "optimization": optimization,
                     "output_mode": output_mode,
                     "json_schema": json_schema,
@@ -374,20 +381,42 @@ class Completions(SyncAPIResource):
             stream_cls=Stream[ChatCompletionChunk],
         )
 
-    ### Uploads a SINGLE FILE (not multiple) from a folderpath + filename, to a namespace
-    ### Errors out if the API returns something erroneous (other than 200)
-    ### namespace=None is accepted because that means collection creation, returns namespace ID if that's the case
     def __file_upload(
-        self, folderpath: str, filename: str, namespace: Optional[str], collection_name: str
+        self, folderpath: str, filename: str, namespace: Optional[str] | None, collection_name: str
     ) -> Tuple[str, str, str]:
-        # Note: namespace=None is allowed here because that means a namespace is being created
+        """
+        Uploads a single file to a specified namespace or creates a new namespace if none is provided.
+
+        This function uploads a file from a given folder path and filename to a specified namespace.
+        If the namespace is None, a new namespace is created. The function returns the namespace ID,
+        contact email, and a message from the server upon successful upload. If the API response is
+        not successful (status code other than 200), a ValueError is raised.
+
+        Args:
+            folderpath (str): The path to the folder containing the file to be uploaded.
+            filename (str): The name of the file to be uploaded.
+            namespace (Optional[str] | None): The namespace to which the file should be uploaded.
+                                              If None, a new namespace is created.
+            collection_name (str): The name of the collection to which the file belongs.
+
+        Returns:
+            Tuple[str, str, str]: A tuple containing the namespace ID, contact email, and a message
+                                  from the server.
+
+        Raises:
+            ValueError: If the API response is not successful (status code other than 200).
+        """
         filepath = os.path.join(folderpath, filename)  # to make this platform-independent, i.e., avoid / vs \
         with open(filepath, "rb") as filedata:
+            data = {"bucket_name": self.__COLLECTIONS, "name": collection_name}
+            if namespace is not None:
+                data["namespace"] = namespace
+
             response = httpx.post(
                 url=f"{self._client.base_url}upload",
                 files={"file": (filename, filedata)},
                 headers={"Authorization": f"Bearer {self._client.api_key}"},
-                data={"bucket_name": "bee_collections", "namespace": namespace, "name": collection_name},
+                data=data,
             )
             if response.status_code == 200:
                 response_json = response.json()  # Use the built-in JSON decoder
@@ -399,14 +428,23 @@ class Completions(SyncAPIResource):
 
         return response_collection_namespace, response_contact_mail, response_message
 
-    ### Fetches the list of documents readily available in a remote namespace
-    ### Errors out if the namespace ID is None
-    ### Errors out if the returned doc list is empty since that means either the namespace does not exist, or that it only has non-indexed files (limbo state)
-    ### Errors out if the API returns something erroneous (other than 200)
     def get_remote_doclist(self, namespace: str) -> List[str]:
+        """
+        Fetches the list of documents available in a specified remote namespace.
+
+        Args:
+            namespace (str): The identifier of the namespace from which to fetch the document list.
+
+        Returns:
+            List[str]: A list of document names available in the specified namespace.
+
+        Raises:
+            ValueError: If the namespace ID is None, if the document list is empty, or if the API response
+                        is not successful (status code other than 200).
+        """
         if self._client.base_url != self._client._rag_base_url:
             self._client.set_base_url_for_request(namespace)
-        
+
         with httpx.Client() as client:
             response = client.post(
                 url=f"{self._client.base_url}document_list",
@@ -419,18 +457,27 @@ class Completions(SyncAPIResource):
         else:
             raise ValueError(f"Response from remote ({response.status_code}): {response.text}")
 
-        if not isinstance(remote_doclist, list):  # TODO: Confirm this
+        if not isinstance(remote_doclist, list):
             errmsg = "Either a namespace with this ID does not exist, or the namespace only has non-indexed files. "
             errmsg += "Please contact librarian@hyperbee.ai if you think you should not have received this error."
             raise ValueError(errmsg)
 
         return remote_doclist
 
-    ### Updates the bucket index after an upload / deletion, runs embedding
-    ### Errors out if the namespace ID is None
-    ### Errors out if the API returns something erroneous (other than 200)
     def __update_index(self, namespace: str, contact_mail: str) -> dict[str, Any]:
+        """
+        Updates the bucket index after an upload or deletion and runs embedding.
 
+        Args:
+            namespace (str): The namespace identifier for which the index needs to be updated.
+            contact_mail (str): The contact email associated with the request.
+
+        Returns:
+            dict[str, Any]: A dictionary containing the response message from the server.
+
+        Raises:
+            ValueError: If the response from the server is not successful (status code other than 200).
+        """
         response = httpx.post(
             url=f"{self._client.base_url}update",
             headers={"Authorization": f"Bearer {self._client.api_key}"},
@@ -451,7 +498,7 @@ class Completions(SyncAPIResource):
         sleepseconds: int = 2,
         timeoutseconds: int = 120,
         verbose: bool = False,
-    ) -> None:
+    ) -> bool:
 
         stop_trying = False
         timeout_flag = False
@@ -496,8 +543,10 @@ class Completions(SyncAPIResource):
             print(
                 "\nIndexing check did not complete up to now. Call poll_index() again later to see if it's completed."
             )
+            return False
         else:
             print("\nIndexing check complete. Checkfilter conditions are met.")
+            return True
 
     def __update_deleted_items(self, namespace: str) -> Dict[str, Any]:
         """
@@ -589,15 +638,51 @@ class Completions(SyncAPIResource):
 
         return local_document_list
 
+    def create_namespace(
+        self, file_list: List[str], sleepseconds: int = 10, timeoutseconds: int = 60, verbose: bool = True
+    ) -> str:
+        """
+        Create a new namespace by uploading a list of files.
+
+        Args:
+            file_list (List[str]): A list of file paths to be uploaded to create the namespace.
+            sleepseconds (int, optional): The number of seconds to sleep between polling attempts. Defaults to 10.
+            timeoutseconds (int, optional): The maximum time in seconds to wait for the operation to complete. Defaults to 60.
+            verbose (bool, optional): If True, prints detailed output during the operation. Defaults to True.
+
+        Returns:
+            str: The created namespace identifier. Returns an empty string if the creation fails.
+
+        Raises:
+            ValueError: If the namespace creation fails.
+        """
+        try:
+            namespace = self.add_to_collection(
+                file_list,
+                None,
+                sleepseconds=sleepseconds,
+                timeoutseconds=timeoutseconds,
+                verbose=verbose,
+                approved=True,
+            )
+        except Exception as e:
+            print(f"Failed to create namespace: {str(e)}")
+            return ""
+
+        if namespace is None:
+            raise ValueError("Failed to create namespace")
+        else:
+            return namespace
+
     def add_to_collection(
         self,
         uploadlist: List[str],
-        namespace: str,
+        namespace: str | None,
         sleepseconds: int = 2,
         timeoutseconds: int = 60,
         verbose: bool = False,
         approved: bool = False,
-    ) -> None:
+    ) -> None | Tuple[str, str]:
         """
         Add documents to a collection in the specified namespace.
 
@@ -608,74 +693,152 @@ class Completions(SyncAPIResource):
             timeoutseconds: Timeout for the entire operation in seconds (default: 60).
             verbose: Whether to print verbose output (default: False).
 
+        Returns:
+            Tuple[str, str]: A tuple containing the namespace identifier and the status of the operation, only if namespace is created for the first time.
+
         Raises:
-            ValueError: If namespace is None.
+            ValueError: If the given parameters' types are not matching.
         """
+        if not isinstance(uploadlist, list) or not all(isinstance(item, str) for item in uploadlist):
+            raise ValueError("uploadlist must be a list of strings.")
+
         if self._client.base_url != self._client._rag_base_url:
-            self._client.set_base_url_for_request(namespace)
-        remote_doclist = self.get_remote_doclist(namespace=namespace)
-
-        # Extract filenames from uploadlist
-        uploadlist_filenames = [os.path.basename(file) for file in uploadlist]
-
-        filesInUploadList_butNotInRemote = list(set(uploadlist_filenames) - set(remote_doclist))
-        filesThatAlreadyExistInRemote = list(set(uploadlist_filenames) - set(filesInUploadList_butNotInRemote))
-        print("Files in local but not in remote (to be uploaded):", filesInUploadList_butNotInRemote)
-
-        if len(filesThatAlreadyExistInRemote) > 0:
-            print(
-                "The following files already exist in remote, so they will not be uploaded at this time:",
-                filesThatAlreadyExistInRemote,
-            )
-            print(
-                "You need to delete the current version of these files from the collection (using remove_from_collection()) before uploading its next version"
-            )
-            if len(filesInUploadList_butNotInRemote) == 0:
-                print("Nothing to upload, canceling.")
-                return
-        print("")
+            self._client.set_base_url_for_request("placeholder")
 
         user_choice = False
-        if not approved:
-            user_decision = input(
-                "Please check the lists above. Do you want to continue with the upload? (answer with just y or n)"
-            )
-            user_choice = user_decision.lower() == "y"
+        if namespace is not None:
+            remote_doclist = self.get_remote_doclist(namespace=namespace)
 
-        if approved or user_choice:
-            if len(filesInUploadList_butNotInRemote) > 0:
-                contact_mail = None
-                ### route /upload canNOT be called with a file list, needs to iterate over list
-                for file in uploadlist:
-                    if os.path.basename(file) in filesInUploadList_butNotInRemote:
-                        folderpath, filename = os.path.split(file)
-                        _, contact_mail, _ = self.__file_upload(
-                            folderpath, filename, namespace=namespace, collection_name="dummy"
-                        )  # collection_name is not needed for existing collections
+            # Extract filenames from uploadlist
+            uploadlist_filenames = [os.path.basename(file) for file in uploadlist]
 
-                if contact_mail is not None:
-                    self.__update_index(namespace=namespace, contact_mail=contact_mail)
-                else:
-                    raise Exception("File upload error")
-            else:
+            filesInUploadList_butNotInRemote = list(set(uploadlist_filenames) - set(remote_doclist))
+            filesThatAlreadyExistInRemote = list(set(uploadlist_filenames) - set(filesInUploadList_butNotInRemote))
+            print("Files in local but not in remote (to be uploaded):", filesInUploadList_butNotInRemote)
+
+            if len(filesThatAlreadyExistInRemote) > 0:
+                print(
+                    "The following files already exist in remote, so they will not be uploaded at this time:",
+                    filesThatAlreadyExistInRemote,
+                )
+                print(
+                    "You need to delete the current version of these files from the collection (using remove_from_collection()) before uploading its next version"
+                )
+                if len(filesInUploadList_butNotInRemote) == 0:
+                    print("Nothing to upload, canceling.")
+                    return
+            print("")
+
+            if not approved:
+                user_decision = input(
+                    "Please check the lists above. Do you want to continue with the upload? (answer with just y or n)"
+                )
+                user_choice = user_decision.lower() == "y"
+            if len(filesInUploadList_butNotInRemote) == 0:
                 if verbose:
                     print("No files to be uploaded, skipping file upload to remote")
                 return
+        else:
+            filesInUploadList_butNotInRemote = [os.path.basename(file) for file in uploadlist]
+
+        if approved or user_choice:
+            contact_mail = None
+            received_namespace = ""
+            ### route /upload canNOT be called with a file list, needs to iterate over list
+            for file in uploadlist:
+                if os.path.basename(file) in filesInUploadList_butNotInRemote:
+                    folderpath, filename = os.path.split(file)
+                    received_namespace, contact_mail, _ = self.__file_upload(
+                        folderpath, filename, namespace=namespace, collection_name="dummy"
+                    )  # collection_name is not needed for existing collections
+
+            if contact_mail is not None:
+                self.__update_index(namespace=received_namespace, contact_mail=contact_mail)
+            else:
+                raise Exception("File upload error")
 
             print(
                 "Upload and indexing update triggered, starting to poll the indexing mechanism with check_index_completion() ..."
             )
             print("")
-            self.__poll_collection_index(
+            success = self.__poll_collection_index(
                 local_doclist=filesInUploadList_butNotInRemote,
-                namespace=namespace,
+                namespace=received_namespace,
                 checkfilter="add",
                 sleepseconds=sleepseconds,
                 timeoutseconds=timeoutseconds,
                 verbose=verbose,
             )
+            status = "Ready" if success else "Pending"
+            if namespace is None:
+                return received_namespace, status
         else:
             print("Canceling upload")
+
+    def __delete_all_documents(self, namespace: str) -> None:
+        """
+        Deletes all documents within the specified namespace.
+
+        Args:
+            namespace (str): The namespace from which all documents will be deleted.
+
+        Raises:
+            ValueError: If the server response indicates a failure to delete the documents.
+        """
+        with httpx.Client() as client:
+            response = client.post(
+                url=f"{self._client.base_url}delete_all_document",
+                headers={"Authorization": f"Bearer {self._client.api_key}"},
+                json={"namespace": namespace},
+            )
+
+        if response.status_code != 200:
+            raise ValueError(f"Response from remote ({response.status_code}): {response.text}")
+
+    def __delete_all_from_vectorstore(self, namespace: str) -> None:
+        """
+        Deletes all entries from the vector store associated with the specified namespace.
+
+        Args:
+            namespace (str): The namespace from which all entries will be deleted.
+
+        Raises:
+            ValueError: If the server response indicates a failure to delete the entries.
+        """
+        with httpx.Client() as client:
+            response = client.post(
+                url=f"{self._client.base_url}delete",
+                headers={"Authorization": f"Bearer {self._client.api_key}"},
+                json={"namespace": namespace},
+            )
+
+        if response.status_code != 200:
+            raise ValueError(f"Response from remote ({response.status_code}): {response.text}")
+
+    def delete_namespace(self, namespace: str) -> None:
+        """
+        Deletes all documents and entries associated with the specified namespace.
+
+        This function attempts to delete all documents within the given namespace
+        and all entries from the vector store associated with the namespace. If any
+        deletion operation fails, an error message is printed.
+
+        Args:
+            namespace (str): The identifier of the namespace to be deleted.
+
+        Raises:
+            Exception: If an error occurs during the deletion of documents or vector store entries.
+        """
+        try:
+            self.__delete_all_documents(namespace=namespace)
+        except Exception as e:
+            print(f"Failed to delete namespace: {str(e)}")
+        try:
+            self.__delete_all_from_vectorstore(namespace=namespace)
+        except Exception as e:
+            print(f"Failed to delete namespace: {str(e)}")
+
+        print(f"Namespace {namespace} deleted")
 
     def remove_from_collection(
         self,
@@ -700,8 +863,13 @@ class Completions(SyncAPIResource):
             verbose (bool, optional): If True, prints verbose output. Defaults to False.
 
         Raises:
-            ValueError: If namespace is None.
+            ValueError: If the given parameters' types are not matching.
         """
+        if not isinstance(namespace, str):
+            raise ValueError("Namespace must be a non-empty string.")
+        if not isinstance(deletionlist, list) or not all(isinstance(item, str) for item in deletionlist):
+            raise ValueError("Deletion list must be a list of strings.")
+
         if self._client.base_url != self._client._rag_base_url:
             self._client.set_base_url_for_request(namespace)
         remote_doclist = self.get_remote_doclist(namespace=namespace)
@@ -737,7 +905,7 @@ class Completions(SyncAPIResource):
             )
             print("")
             local_list_for_polling = list(filesInRemote_matchingDeletionList)
-            self.__poll_collection_index(
+            _ = self.__poll_collection_index(
                 local_doclist=local_list_for_polling,
                 namespace=namespace,
                 checkfilter="remove",
@@ -749,7 +917,6 @@ class Completions(SyncAPIResource):
             print("Canceling deletion")
             return
 
-    ### Syncs local and remote folders if there are any differences between them
     def sync_local_and_collection(
         self, folder_path: str, namespace: str, sleepseconds: int = 2, timeoutseconds: int = 60, verbose: bool = False
     ) -> None:
@@ -766,14 +933,17 @@ class Completions(SyncAPIResource):
             timeoutseconds (int, optional): Timeout for polling in seconds. Defaults to 60.
             verbose (bool, optional): If True, prints verbose output. Defaults to False.
 
-        Returns:
-            bool: True if sync was successful, False otherwise.
-
         Raises:
-            ValueError: If namespace is None.
+            ValueError: If folder_path or namespace is not a string.
         """
+        if not isinstance(folder_path, str):
+            raise ValueError("folder_path must be a string.")
+        if not isinstance(namespace, str):
+            raise ValueError("namespace must be a string.")
+
         if self._client.base_url != self._client._rag_base_url:
             self._client.set_base_url_for_request(namespace)
+
         remote_doclist = self.get_remote_doclist(namespace=namespace)
         local_doclist_filenames = self.__get_local_doclist(folder_path=folder_path)
         local_doclist = [os.path.join(folder_path, file) for file in local_doclist_filenames]
